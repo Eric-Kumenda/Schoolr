@@ -1,33 +1,58 @@
-import React from "react";
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import "./App.css";
-import Login from "./Components/Login/Login";
-import NewStudentReg from "./Components/Register/NewStudent";
-import NewStaffReg from "./Components/Register/NewStaffReg";
-import Dashboard from "./Components/Dashboard/Dashboard";
-import AppSidebar from "./Components/AppSidebar";
+import React, {useEffect, Suspense} from "react";
+import { HashRouter, Routes, Route } from "react-router-dom";
+import { useSelector } from 'react-redux'
+
+import { CSpinner, useColorModes } from '@coreui/react'
+
+import "./scss/styles.scss";
+
+// Containers
+const DefaultLayout = React.lazy(() => import('./layout/DefaultLayout'))
+
+// Pages
+const Login = React.lazy(() => import('./views/pages/Login/Login'))
+const RegisterStaff = React.lazy(() => import('./views/pages/Register/NewStaffReg'))
+const RegisterStudent = React.lazy(() => import('./views/pages/Register/NewStudent'))
+const Page404 = React.lazy(() => import('./views/pages/page404/Page404'))
+const Page500 = React.lazy(() => import('./views/pages/page500/Page500'))
 
 const App = () => {
-	return (
-		<Router>
-			<Routes>
-				{/* Root Path */}
-				<Route path="/" element={<h2>Schoolr</h2>} />
-				{/* Dashboard Path */}
-				<Route path="/dashboard" element={<AppSidebar />} />
 
-				{/* Auth route */}
-				<Route path="/auth">
-					<Route index element={<p>Auth</p>} />
-					{/* Login Route */}
-					<Route path="login" element={<Login />} />
-					{/* New Student Registration Route */}
-					<Route path="newStudent" element={<NewStudentReg />} />
-					{/* New Staff Registration Route */}
-					<Route path="newStaff" element={<NewStaffReg />} />
-				</Route>
-			</Routes>
-		</Router>
+	const { isColorModeSet, setColorMode } = useColorModes('light') //useColorModes('coreui-free-react-admin-template-theme')
+	const storedTheme = useSelector((state) => state.theme)
+  
+	useEffect(() => {
+	  const urlParams = new URLSearchParams(window.location.href.split('?')[1])
+	  const theme = urlParams.get('theme') && urlParams.get('theme').match(/^[A-Za-z0-9\s]+/)[0]
+	  if (theme) {
+		setColorMode(theme)
+	  }
+  
+	  if (isColorModeSet()) {
+		return
+	  }
+  
+	  setColorMode(storedTheme)
+	}, []) // eslint-disable-line react-hooks/exhaustive-deps
+	return (
+		<HashRouter>
+		<Suspense
+		  fallback={
+			<div className="pt-3 text-center">
+			  <CSpinner color="primary" variant="grow" />
+			</div>
+		  }
+		>
+		  <Routes>
+			<Route exact path="/login" name="Login Page" element={<Login />} />
+			<Route exact path="/registerStaff" name="Staff Register Page" element={<RegisterStaff />} />
+			<Route exact path="/registerStudent" name="Student Register Page" element={<RegisterStudent />} />
+			<Route exact path="/404" name="Page 404" element={<Page404 />} />
+			<Route exact path="/500" name="Page 500" element={<Page500 />} />
+			<Route path="*" name="Home" element={<DefaultLayout />} />
+		  </Routes>
+		</Suspense>
+	  </HashRouter>
 	);
 };
 

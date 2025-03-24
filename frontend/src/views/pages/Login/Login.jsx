@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import LoaderModal from "../LoaderModal/LoaderModal";
+import LoaderModal from "../../../components/LoaderModal/LoaderModal";
 import { Link, useNavigate } from "react-router-dom";
 
 const Login = () => {

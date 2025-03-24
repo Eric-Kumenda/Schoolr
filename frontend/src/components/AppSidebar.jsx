@@ -11,13 +11,13 @@ import {
 } from "@coreui/react";
 import { Link } from "react-router-dom";
 
-import { AppSidebarNav } from './AppSidebarNav'
+import { AppSidebarNav } from "./AppSidebarNav";
 
 // import { logo } from 'src/assets/brand/logo'
 // import { sygnet } from 'src/assets/brand/sygnet'
 
 // sidebar nav config
-import navigation from '../_nav'
+import navigation from "../_nav";
 
 const AppSidebar = () => {
 	const dispatch = useDispatch();
@@ -35,12 +35,15 @@ const AppSidebar = () => {
 				dispatch({ type: "set", sidebarShow: visible });
 			}}>
 			<CSidebarHeader className="border-bottom">
-				<CSidebarBrand as={Link} to="/dashboard" className="w-100 d-flex">
+				<CSidebarBrand
+					as={Link}
+					to="/dashboard"
+					className="w-100 d-flex">
 					<img
 						className="sidebar-brand-full mx-auto"
 						src="/img/S_logo_full.svg"
 						alt="Schoolr Logo"
-						height={36}
+						height={32}
 					/>
 					<img
 						className="sidebar-brand-narrow mx-auto"
@@ -59,6 +62,7 @@ const AppSidebar = () => {
 			<AppSidebarNav items={navigation} />
 			<CSidebarFooter className="border-top d-none d-lg-flex">
 				<CSidebarToggler
+					className="ms-auto"
 					onClick={() =>
 						dispatch({
 							type: "set",
