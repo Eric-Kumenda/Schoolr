@@ -1,10 +1,8 @@
 import React, { useState } from "react";
-import LoaderModal from "../../../components/LoaderModal/LoaderModal";
 import { Link, useNavigate } from "react-router-dom";
 
-const Login = () => {
+const LoginStaff = () => {
     const navigate = useNavigate(); // Hook to navigate
-	const [loading, setLoading] = useState(false);
 
 	const [usernameValue, setUsernameValue] = useState("");
 	const [passwordValue, setPasswordValue] = useState("");
@@ -12,10 +10,7 @@ const Login = () => {
 
 	const handleSubmit = (e) => {
 		e.preventDefault();
-		//Loader Animation
-		setLoading(true);
 		setTimeout(() => {
-			setLoading(false);
 			// Simulate successful login
 			//alert("Logged in:" + usernameValue + " " + passwordValue);
             navigate("/dashboard");
@@ -35,20 +30,20 @@ const Login = () => {
 							/></Link>
 						</div>
 						<h5 className="fw-bold mx-auto text-body font-fredoka">
-							Login to your space
+							Staff Login
 						</h5>
 						<form className="px-3 px-md-1" onSubmit={handleSubmit}>
 							<div className="mb-3">
 								<label
 									htmlFor="usernameField"
 									className="form-label">
-									Username
+									Email
 								</label>
 								<input
 									type="email"
 									className="form-control"
 									id="usernameField"
-									placeholder="Adm.No@schoolcode"
+									placeholder="name@example.com"
 									value={usernameValue}
 									onChange={(e) =>
 										setUsernameValue(e.target.value)
@@ -79,16 +74,16 @@ const Login = () => {
 										required
 									/>
 									<button
-										className="btn btn-outline-dark"
+										className="btn btn-outline-bg"
 										type="button"
 										id="passBtn"
 										onClick={() =>
 											setPasswordView(!passwordView)
 										}>
 										{passwordView ? (
-											<i className="bi bi-eye text-bg"></i>
+											<i className="bi bi-eye"></i>
 										) : (
-											<i className="bi bi-eye-slash text-bg"></i>
+											<i className="bi bi-eye-slash"></i>
 										)}
 									</button>
 								</div>
@@ -105,7 +100,7 @@ const Login = () => {
 								<p className="text-center">
 									Forgot Your Password?{" "}
 									<Link
-										to="/"
+										to="/404"
 										className="text-decoration-none">
 										Reset Password
 									</Link>
@@ -115,7 +110,7 @@ const Login = () => {
 								<p className="text-center">
 									New User?{" "}
 									<Link
-										to="/auth/newStudent"
+										to="/registerStaff"
 										className="text-decoration-none">
 										Request for your ID
 									</Link>
@@ -127,11 +122,9 @@ const Login = () => {
 						</form>
 					</div>
 				</div>
-				{/* Loader Modal */}
-				<LoaderModal isLoading={loading} />
 			</div>
 		</>
 	);
 };
 
-export default Login;
+export default LoginStaff;

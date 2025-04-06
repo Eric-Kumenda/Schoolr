@@ -25,23 +25,35 @@ const _nav = [
 		items: [
 			{
 				component: CNavItem,
-				name: "Alerts",
-				to: "/notifications/alerts",
+				name: "Summary",
+				to: "/dashboard",
 			},
 			{
 				component: CNavItem,
-				name: "Badges",
-				to: "/notifications/badges",
+				name: "Messages",
+				to: "/dashboard/badges",
 			},
 			{
 				component: CNavItem,
-				name: "Modal",
-				to: "/notifications/modals",
+				name: "Schedule",
+				to: "/dashboard/schedule",
+			},
+		],
+	},
+	{
+		component: CNavGroup,
+		name: "School",
+		icon: <i className="fa-regular fa-school nav-icon"></i>,
+		items: [
+			{
+				component: CNavItem,
+				name: "Profile",
+				to: "/school/profile",
 			},
 			{
 				component: CNavItem,
-				name: "Toasts",
-				to: "/notifications/toasts",
+				name: "Billing",
+				to: "/school/billing",
 			},
 		],
 	},
@@ -52,23 +64,18 @@ const _nav = [
 		items: [
 			{
 				component: CNavItem,
-				name: "Alerts",
+				name: "Teachers",
 				to: "/notifications/alerts",
 			},
 			{
 				component: CNavItem,
-				name: "Badges",
+				name: "Non-Teaching",
 				to: "/notifications/badges",
 			},
 			{
 				component: CNavItem,
-				name: "Modal",
+				name: "Profile",
 				to: "/notifications/modals",
-			},
-			{
-				component: CNavItem,
-				name: "Toasts",
-				to: "/notifications/toasts",
 			},
 		],
 	},
@@ -79,23 +86,18 @@ const _nav = [
 		items: [
 			{
 				component: CNavItem,
-				name: "Alerts",
-				to: "/notifications/alerts",
+				name: "Streams",
+				to: "/students/streams",
 			},
 			{
 				component: CNavItem,
-				name: "Badges",
-				to: "/notifications/badges",
+				name: "Classes",
+				to: "/students/classes",
 			},
 			{
 				component: CNavItem,
-				name: "Modal",
-				to: "/notifications/modals",
-			},
-			{
-				component: CNavItem,
-				name: "Toasts",
-				to: "/notifications/toasts",
+				name: "Profile",
+				to: "/students/profile",
 			},
 		],
 	},
@@ -133,23 +135,13 @@ const _nav = [
 		items: [
 			{
 				component: CNavItem,
-				name: "Alerts",
-				to: "/notifications/alerts",
+				name: "New Student",
+				to: "/admission/new",
 			},
 			{
 				component: CNavItem,
-				name: "Badges",
-				to: "/notifications/badges",
-			},
-			{
-				component: CNavItem,
-				name: "Modal",
-				to: "/notifications/modals",
-			},
-			{
-				component: CNavItem,
-				name: "Toasts",
-				to: "/notifications/toasts",
+				name: "Current Student",
+				to: "/admission/current",
 			},
 		],
 	},
@@ -160,27 +152,54 @@ const _nav = [
 		items: [
 			{
 				component: CNavItem,
-				name: "Alerts",
-				to: "/notifications/alerts",
+				name: "Officers",
+				to: "/finance/officers",
 			},
 			{
 				component: CNavItem,
-				name: "Badges",
-				to: "/notifications/badges",
+				name: "Balances",
+				to: "/finance/balances",
 			},
 			{
 				component: CNavItem,
-				name: "Modal",
-				to: "/notifications/modals",
+				name: "Expenditure",
+				to: "/finance/expenditure",
 			},
 			{
 				component: CNavItem,
-				name: "Toasts",
-				to: "/notifications/toasts",
+				name: "Claims",
+				to: "/finance/claims",
 			},
 		],
 	},
 	{
+		component: CNavGroup,
+		name: "Boarding",
+		icon: <i className="fa-regular fa-building-user nav-icon"></i>,
+		items: [
+			{
+				component: CNavItem,
+				name: "Houses",
+				to: "/boarding/houses",
+			},
+			{
+				component: CNavItem,
+				name: "Dorms",
+				to: "/boarding/dorms",
+			},
+			{
+				component: CNavItem,
+				name: "Patrons",
+				to: "/boarding/patrons",
+			},
+			{
+				component: CNavItem,
+				name: "Prefects",
+				to: "/boarding/prefects",
+			},
+		],
+	},
+	/*{
 		component: CNavGroup,
 		name: "Events",
 		icon: <i className="fa-regular fa-calendar-lines nav-icon"></i>,
@@ -206,12 +225,12 @@ const _nav = [
 				to: "/notifications/toasts",
 			},
 		],
-	},
+	},*/
 
 	{
 		component: CNavItem,
 		name: "Settings",
-		to: "/dashboard",
+		to: "/settings",
 		icon: <i className="fa-regular fa-gear nav-icon"></i>,
 	},
 	/*{
@@ -702,9 +721,9 @@ const _nav = [
 	},*/
 	{
 		component: CNavItem,
-		name: "Docs",
-		href: "https://coreui.io/react/docs/templates/installation/",
-		icon: <CIcon icon={cilDescription} customClassName="nav-icon" />,
+		name: "Login",
+		to: '/loginStudent',
+		icon: <i className="fa-regular fa-user-unlock nav-icon"></i>,
 	},
 ];
 

@@ -3,6 +3,12 @@ import { legacy_createStore as createStore } from 'redux'
 const initialState = {
   sidebarShow: true,
   theme: 'light',
+  user: {
+    avatar: '',
+    name: '',
+    email: '',
+    token: '',
+    },
 }
 
 const changeState = (state = initialState, { type, ...rest }:any) => {

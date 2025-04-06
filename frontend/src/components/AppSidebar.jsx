@@ -26,7 +26,7 @@ const AppSidebar = () => {
 
 	return (
 		<CSidebar
-			className="border-end"
+			className="border-end rounded-end"
 			// colorScheme="dark"
 			position="fixed"
 			unfoldable={unfoldable}
@@ -62,7 +62,7 @@ const AppSidebar = () => {
 			<AppSidebarNav items={navigation} />
 			<CSidebarFooter className="border-top d-none d-lg-flex">
 				<CSidebarToggler
-					className="ms-auto"
+					className="ms-auto text-dark-emphasis"
 					onClick={() =>
 						dispatch({
 							type: "set",

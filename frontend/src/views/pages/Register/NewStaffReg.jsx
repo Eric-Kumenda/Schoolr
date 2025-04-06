@@ -1,9 +1,7 @@
 import React, { useState } from "react";
-import LoaderModal from "../../../components/LoaderModal/LoaderModal";
 import { Link } from "react-router-dom";
 
 const NewStaffReg = () => {
-	const [loading, setLoading] = useState(false);
 
 	const [firstNameValue, setFirstNameValue] = useState("");
 	const [lastNameValue, setLastNameValue] = useState("");
@@ -13,12 +11,10 @@ const NewStaffReg = () => {
 
 	const handleSubmit = (e) => {
 		e.preventDefault();
-		//Loader Animation
-		setLoading(true);
 		setTimeout(() => {
-			setLoading(false);
 			// Simulate successful login
-			alert("Logged in:" + IdValue + " " + schoolValue);
+			//alert("Logged in:" + IdValue + " " + schoolValue);
+            navigate("/dashboard");
 		}, 3000);
 	};
 	return (
@@ -154,7 +150,7 @@ const NewStaffReg = () => {
 								<p className="text-center">
 									Already Registered?{" "}
 									<Link
-										to="/auth/login"
+										to="/loginStaff"
 										className="text-decoration-none">
 										Sign In
 									</Link>
@@ -166,8 +162,6 @@ const NewStaffReg = () => {
 						</form>
 					</div>
 				</div>
-				{/* Loader Modal */}
-				<LoaderModal isLoading={loading} />
 			</div>
 		</>
 	);

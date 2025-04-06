@@ -1,10 +1,7 @@
 import React, { useState } from "react";
-import LoaderModal from "../LoaderModal/LoaderModal";
 import { Link } from "react-router-dom";
 
 const NewStudentReg = () => {
-	const [loading, setLoading] = useState(false);
-
 	const [firstNameValue, setFirstNameValue] = useState("");
 	const [lastNameValue, setLastNameValue] = useState("");
 	const [admValue, setAdmValue] = useState("");
@@ -13,12 +10,10 @@ const NewStudentReg = () => {
 
 	const handleSubmit = () => {
 		e.preventDefault();
-		//Loader Animation
-		setLoading(true);
 		setTimeout(() => {
-			setLoading(false);
 			// Simulate successful login
-			alert("Logged in:" + admValue + " " + schoolValue);
+			//alert("Logged in:" + admValue + " " + schoolValue);
+			navigate("/dashboard");
 		}, 3000);
 	};
 	return (
@@ -156,7 +151,7 @@ const NewStudentReg = () => {
 								<p className="text-center">
 									Already Registered?{" "}
 									<Link
-										to="/auth/login"
+										to="/loginStudent"
 										className="text-decoration-none">
 										Sign In
 									</Link>
@@ -168,8 +163,6 @@ const NewStudentReg = () => {
 						</form>
 					</div>
 				</div>
-				{/* Loader Modal */}
-				<LoaderModal isLoading={loading} />
 			</div>
 		</>
 	);
