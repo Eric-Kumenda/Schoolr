@@ -102,6 +102,12 @@ const _nav = [
 		],
 	},
 	{
+		component: CNavItem,
+		name: "Messages",
+		to: "/chat",
+		icon: <i className="fa-solid fa-comment nav-icon"></i>,
+	},
+	{
 		component: CNavGroup,
 		name: "Attendance",
 		icon: <i className="fa-regular fa-clipboard-list-check nav-icon"></i>,

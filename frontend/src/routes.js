@@ -5,6 +5,7 @@ const Dashboard = React.lazy(() => import("./components/Dashboard/Dashboard"));
 const Streams = React.lazy(() => import("./views/students/Streams"));
 const Classes = React.lazy(() => import("./views/students/Classes"));
 const StudentProfile = React.lazy(() => import("./views/students/StudentProfile"));
+const Chat = React.lazy(() => import("./views/pages/Chat/Chat"));
 
 const routes = [
 	{ path: "/", exact: true, name: "Home" },
@@ -13,6 +14,8 @@ const routes = [
 	{ path: "/students/streams", name: "Streams", element: Streams },
 	{ path: "/students/classes", name: "Classes", element: Classes },
 	{ path: "/students/profile", name: "Student Profile", element: StudentProfile },
+	{ path: "/chat", name: "Messages", element: Chat },
+
 ];
 
 
