@@ -13,16 +13,35 @@ import { Link } from "react-router-dom";
 
 import { AppSidebarNav } from "./AppSidebarNav";
 
-// import { logo } from 'src/assets/brand/logo'
-// import { sygnet } from 'src/assets/brand/sygnet'
-
-// sidebar nav config
-import navigation from "../_nav";
+import adminNav from "../navs/adminNav";
+import teacherNav from "../navs/teacherNav";
+import studentNav from "../navs/studentNav";
+import parentNav from "../navs/parentNav";
+import { setAppState } from "../store/appSlice";
 
 const AppSidebar = () => {
 	const dispatch = useDispatch();
-	const unfoldable = useSelector((state) => state.sidebarUnfoldable);
-	const sidebarShow = useSelector((state) => state.sidebarShow);
+	const role = useSelector((state) => state.auth.role);
+	const unfoldable = useSelector((state) => state.app.sidebarUnfoldable);
+	const sidebarShow = useSelector((state) => state.app.sidebarShow);
+	let navConfig = [];
+
+	switch (role) {
+		case "admin":
+			navConfig = adminNav;
+			break;
+		case "teacher":
+			navConfig = teacherNav;
+			break;
+		case "student":
+			navConfig = studentNav;
+			break;
+		case "parent":
+			navConfig = parentNav;
+			break;
+		default:
+			navConfig = [];
+	}
 
 	return (
 		<CSidebar
@@ -37,7 +56,7 @@ const AppSidebar = () => {
 			<CSidebarHeader className="border-bottom">
 				<CSidebarBrand
 					as={Link}
-					to="/dashboard"
+					to={`/${role}`}
 					className="w-100 d-flex">
 					<img
 						className="sidebar-brand-full mx-auto"
@@ -55,19 +74,16 @@ const AppSidebar = () => {
 					className="d-lg-none"
 					dark
 					onClick={() =>
-						dispatch({ type: "set", sidebarShow: false })
+						dispatch(setAppState({ sidebarShow: false }))
 					}
 				/>
 			</CSidebarHeader>
-			<AppSidebarNav items={navigation} />
+			<AppSidebarNav items={navConfig} />
 			<CSidebarFooter className="border-top d-none d-lg-flex">
 				<CSidebarToggler
 					className="ms-auto text-dark-emphasis"
 					onClick={() =>
-						dispatch({
-							type: "set",
-							sidebarUnfoldable: !unfoldable,
-						})
+						dispatch(setAppState({ sidebarUnfoldable: !unfoldable }))
 					}
 				/>
 			</CSidebarFooter>

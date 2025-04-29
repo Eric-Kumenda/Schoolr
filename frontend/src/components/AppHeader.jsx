@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { NavLink } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import {
@@ -27,15 +27,16 @@ import {
 
 import { AppBreadcrumb } from "./index";
 import { AppHeaderDropdown } from "./header/index";
+import { setAppState } from "../store/appSlice";
+import { getSchoolProfile } from "../store/schoolSlice";
 
-const AppHeader = () => {
+const AppHeader = ({ routes }) => {
 	const headerRef = useRef();
-	const { colorMode, setColorMode } = useColorModes(
-		"coreui-free-react-admin-template-theme"
-	);
+	const { colorMode, setColorMode } = useColorModes("Schoolr");
 
 	const dispatch = useDispatch();
-	const sidebarShow = useSelector((state) => state.sidebarShow);
+	const sidebarShow = useSelector((state) => state.app.sidebarShow);
+	const schoolData = useSelector((state) => state.school.school);
 
 	useEffect(() => {
 		document.addEventListener("scroll", () => {
@@ -48,18 +49,21 @@ const AppHeader = () => {
 	}, []);
 
 	return (
-		<CHeader position="sticky" className="mb-4 p-0 rounded-bottom" ref={headerRef}>
+		<CHeader
+			position="sticky"
+			className="mb-4 p-0 rounded-bottom"
+			ref={headerRef}>
 			<CContainer className="border-bottom headerGradient px-4" fluid>
 				<CHeaderToggler
 					onClick={() =>
-						dispatch({ type: "set", sidebarShow: !sidebarShow })
+						dispatch(setAppState({ sidebarShow: !sidebarShow }))
 					}
 					style={{ marginInlineStart: "-14px" }}>
 					<CIcon icon={cilMenu} size="lg" />
 				</CHeaderToggler>
 				<CHeaderNav className="d-none d-md-flex">
 					<CNavItem className="px-md-4">
-						<h5 className="mb-0">Welcome Lanii!</h5>
+						<h5 className="mb-0">{schoolData&&schoolData.name} <span class="badge rounded px-2 ms-1" style={{backgroundColor: schoolData&&schoolData.color, color: 'transparent', userSelect: 'none'}}>{1}</span></h5>
 					</CNavItem>
 					{/* <CNavItem>
 						<CNavLink to="/dashboard" as={NavLink}>
@@ -76,7 +80,7 @@ const AppHeader = () => {
 				<CHeaderNav className="ms-auto">
 					<CNavItem>
 						<CNavLink href="#">
-							<i class="fa-duotone fa-light fa-bell fs-5"></i>
+							<i className="fa-duotone fa-light fa-bell fs-5"></i>
 						</CNavLink>
 					</CNavItem>
 					<CNavItem>
@@ -86,7 +90,7 @@ const AppHeader = () => {
 					</CNavItem>
 					<CNavItem>
 						<CNavLink href="#">
-							<i class="fa-duotone fa-solid fa-messages fs-5"></i>
+							<i className="fa-duotone fa-solid fa-messages fs-5"></i>
 						</CNavLink>
 					</CNavItem>
 				</CHeaderNav>
@@ -97,11 +101,11 @@ const AppHeader = () => {
 					<CDropdown variant="nav-item" placement="bottom-end">
 						<CDropdownToggle caret={false}>
 							{colorMode === "dark" ? (
-								<i class="fa-regular fa-moon-stars fs-5"></i>
+								<i className="fa-regular fa-moon-stars fs-5"></i>
 							) : colorMode === "auto" ? (
-								<i class="fa-duotone fa-regular fa-circle-half-stroke fs-5"></i>
+								<i className="fa-duotone fa-regular fa-circle-half-stroke fs-5"></i>
 							) : (
-								<i class="fa-regular fa-sun-bright fs-5"></i>
+								<i className="fa-regular fa-sun-bright fs-5"></i>
 							)}
 						</CDropdownToggle>
 						<CDropdownMenu>
@@ -111,7 +115,7 @@ const AppHeader = () => {
 								as="button"
 								type="button"
 								onClick={() => setColorMode("light")}>
-								<i class="fa-regular fa-sun-bright fs-5 me-2"></i>{" "}
+								<i className="fa-regular fa-sun-bright fs-5 me-2"></i>{" "}
 								Light
 							</CDropdownItem>
 							<CDropdownItem
@@ -120,7 +124,7 @@ const AppHeader = () => {
 								as="button"
 								type="button"
 								onClick={() => setColorMode("dark")}>
-								<i class="fa-regular fa-moon-stars fs-5 me-2"></i>{" "}
+								<i className="fa-regular fa-moon-stars fs-5 me-2"></i>{" "}
 								Dark
 							</CDropdownItem>
 							<CDropdownItem
@@ -129,7 +133,7 @@ const AppHeader = () => {
 								as="button"
 								type="button"
 								onClick={() => setColorMode("auto")}>
-								<i class="fa-duotone fa-regular fa-circle-half-stroke fs-5 me-2"></i>{" "}
+								<i className="fa-duotone fa-regular fa-circle-half-stroke fs-5 me-2"></i>{" "}
 								Auto
 							</CDropdownItem>
 						</CDropdownMenu>
@@ -141,7 +145,7 @@ const AppHeader = () => {
 				</CHeaderNav>
 			</CContainer>
 			<CContainer className="px-4" fluid>
-				<AppBreadcrumb />
+				<AppBreadcrumb routes={routes} />
 			</CContainer>
 		</CHeader>
 	);

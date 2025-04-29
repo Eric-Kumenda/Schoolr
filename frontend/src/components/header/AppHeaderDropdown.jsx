@@ -23,15 +23,38 @@ import {
 import CIcon from "@coreui/icons-react";
 
 import avatar4 from "./../../assets/images/avatars/4.jpg";
+import { useDispatch, useSelector } from "react-redux";
+import { logout } from "../../store/authSlice";
 
 const AppHeaderDropdown = () => {
+	const dispatch = useDispatch()
+	const firstName = useSelector((state)=> state.auth.first_name)
+	const lastName = useSelector((state)=> state.auth.last_name)
+	const userRole= useSelector((state)=> state.auth.role)
+	
+	const handleLogout = () => {
+		dispatch(logout())
+	}
 	return (
 		<CDropdown variant="nav-item">
 			<CDropdownToggle
 				placement="bottom-end"
-				className="py-0 pe-0"
+				className="py-0 px-3 rounded border border-body-tertiary"
 				caret={false}>
+					<div className="row gx-3">
+						<div className="col">
 						<CAvatar src={avatar4} size="md" />
+						</div>
+						<div className="col">
+							<p className="fw-bold m-0 p-0" style={{fontSize: '0.85rem'}}>
+								{firstName}
+							</p>
+							<p className="fw-light m-0 p-0 text-muted" style={{fontSize: '0.75rem'}}>
+								{userRole}
+							</p>
+						</div>
+					</div>
+						
 			</CDropdownToggle>
 			<CDropdownMenu className="pt-0" placement="bottom-end">
 				<CDropdownHeader className="bg-body-secondary fw-semibold mb-2">
@@ -91,7 +114,7 @@ const AppHeaderDropdown = () => {
 					</CBadge>
 				</CDropdownItem>
 				<CDropdownDivider />
-				<CDropdownItem href="#">
+				<CDropdownItem onClick={handleLogout}>
 					<CIcon icon={cilLockLocked} className="me-2" />
 					Lock Account
 				</CDropdownItem>
