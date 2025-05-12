@@ -5,24 +5,15 @@ import { GoogleLogin } from "@react-oauth/google";
 
 import { googleLoginUser, loadUser, loginUser } from "../../../store/authSlice";
 import { getSchoolProfile } from "../../../store/schoolSlice";
+import { fetchConversations } from "../../../store/chatSlice";
+import BarLoader from "../../../components/loaders/BarLoader";
+import { CSpinner } from "@coreui/react";
 
 const Login = () => {
 	const dispatch = useDispatch();
 	const navigate = useNavigate();
 	const [formData, setFormData] = useState({ email: "", password: "" });
-	//const authState = useSelector((state) => state.auth);
-
-	// useEffect(() => {
-	// 	const fetchUserData = async () => {
-	// 		if (authState.token !== null) {
-	// 			const result = await dispatch(loadUser());
-	// 			console.log(result);
-	// 			if (result?.payload?.token) navigate(`/${authState.role}`);
-	// 		}
-	// 	};
-	// 	fetchUserData()
-	// 	//console.log(authState);
-	// }, []);
+	const loginLoading = useSelector((state) => state.auth.loading);
 
 	const handleChange = (e) => {
 		setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -35,6 +26,7 @@ const Login = () => {
 		const schoolResult = await dispatch(
 			getSchoolProfile({ schoolId: result?.payload?.user?.schoolId })
 		);
+		//await dispatch(fetchConversations(result?.payload?.user?.userId));
 		if (result?.payload?.token && schoolResult) {
 			switch (result.payload.user.role) {
 				case "admin":
@@ -170,8 +162,8 @@ const Login = () => {
 							<div className="col-12">
 								<button
 									className="btn btn-primary w-100 py-2"
-									type="submit">
-									Login
+									type={loginLoading ? "button" : "submit"}>
+									{loginLoading ? <CSpinner color="light" /> : "Login"}
 								</button>
 							</div>
 							<hr />

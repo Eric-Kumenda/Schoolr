@@ -1,8 +1,7 @@
-// utils/axios.js
 import axios from 'axios'
 
 const api = axios.create({
-  baseURL: 'http://localhost:5000/api',
+  baseURL: 'https://192.168.100.11:5000/api',
   withCredentials: true,
 })
 
@@ -19,7 +18,7 @@ api.interceptors.response.use(
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true
       try {
-        const res = await axios.get('/auth/refresh', {
+        const res = await api.get('/auth/refresh', {
           withCredentials: true,
         })
         console.log(res.data.token)

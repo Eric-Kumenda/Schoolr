@@ -5,7 +5,6 @@ const jwt = require("jsonwebtoken");
 const { OAuth2Client } = require("google-auth-library");
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
-
 const JWT_SECRET = process.env.JWT_SECRET;
 const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET;
 
@@ -77,8 +76,8 @@ exports.login = async (req, res) => {
 
 		res.cookie("refreshToken", refreshToken, {
 			httpOnly: true,
-			secure: process.env.NODE_ENV === "production",
-			sameSite: "Lax",
+			secure: true,
+			sameSite: "None",
 			path: "/api/auth/refresh",
 			maxAge: 7 * 24 * 60 * 60 * 1000,
 		});
@@ -157,8 +156,12 @@ exports.logout = async (req, res) => {
 		}
 	}
 
-	res.clearCookie("refreshToken", { path: "/api/auth/refresh" });
-	res.sendStatus(204); // No content, logout successful
+	res.clearCookie("refreshToken", {
+		path: "/api/auth/refresh",
+		sameSite: "None",
+		secure: true,
+	});
+	res.status(200).json({ message: "Logged out" });
 };
 
 exports.googleLogin = async (req, res) => {
@@ -230,8 +233,8 @@ exports.googleLogin = async (req, res) => {
 
 		res.cookie("refreshToken", refreshToken, {
 			httpOnly: true,
-			secure: process.env.NODE_ENV === "production",
-			sameSite: "Lax",
+			secure: true,
+			sameSite: "None",
 			path: "/api/auth/refresh",
 			maxAge: 7 * 24 * 60 * 60 * 1000,
 		});

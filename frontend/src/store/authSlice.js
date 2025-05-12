@@ -1,5 +1,6 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit'
 import axios from '../utils/axios'
+import socket from '../socket'
 
 const tokenFromStorage = localStorage.getItem('token')
 
@@ -84,6 +85,7 @@ const authSlice = createSlice({
       state.email = null
       state.role = null
       state.token = null
+      socket.disconnect()
       localStorage.removeItem('token')
     },
     setUser: (state, action) => {

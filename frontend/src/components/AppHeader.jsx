@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { NavLink } from "react-router-dom";
+import { Link, NavLink } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import {
 	CContainer,
@@ -37,6 +37,7 @@ const AppHeader = ({ routes }) => {
 	const dispatch = useDispatch();
 	const sidebarShow = useSelector((state) => state.app.sidebarShow);
 	const schoolData = useSelector((state) => state.school.school);
+	const role = useSelector((state) => state.auth.role);
 
 	useEffect(() => {
 		document.addEventListener("scroll", () => {
@@ -63,7 +64,7 @@ const AppHeader = ({ routes }) => {
 				</CHeaderToggler>
 				<CHeaderNav className="d-none d-md-flex">
 					<CNavItem className="px-md-4">
-						<h5 className="mb-0">{schoolData&&schoolData.name} <span class="badge rounded px-2 ms-1" style={{backgroundColor: schoolData&&schoolData.color, color: 'transparent', userSelect: 'none'}}>{1}</span></h5>
+						<h5 className="mb-0">{schoolData&&schoolData.name} <span className="badge rounded px-2 ms-1" style={{backgroundColor: schoolData&&schoolData.color, color: 'transparent', userSelect: 'none'}}>{1}</span></h5>
 					</CNavItem>
 					{/* <CNavItem>
 						<CNavLink to="/dashboard" as={NavLink}>
@@ -89,7 +90,7 @@ const AppHeader = ({ routes }) => {
 						</CNavLink>
 					</CNavItem>
 					<CNavItem>
-						<CNavLink href="#">
+						<CNavLink as={Link} to={`/${role}/chat`}>
 							<i className="fa-duotone fa-solid fa-messages fs-5"></i>
 						</CNavLink>
 					</CNavItem>
@@ -144,9 +145,9 @@ const AppHeader = ({ routes }) => {
 					<AppHeaderDropdown />
 				</CHeaderNav>
 			</CContainer>
-			<CContainer className="px-4" fluid>
+			{/* <CContainer className="px-4" fluid>
 				<AppBreadcrumb routes={routes} />
-			</CContainer>
+			</CContainer> */}
 		</CHeader>
 	);
 };

@@ -17,6 +17,7 @@ import "./scss/styles.scss";
 import "./scss/custom.scss";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { loadUser } from "./store/authSlice";
+import CallHandler from "./views/pages/Chat/CallHandler";
 //import "./scss/customBootstrap.scss";
 
 // Containers
@@ -72,46 +73,50 @@ const App = () => {
 					</div>
 				}>
 				<Routes>
-						<Route path="/login" element={<Login />} />
-						<>
-							<Route path="/500" element={<Page500 />} />
-							<Route path="/404" element={<Page404 />} />
+					<Route path="/login" element={<Login />} />
+					<>
+						<Route path="/500" element={<Page500 />} />
+						<Route path="/404" element={<Page404 />} />
 
-							<Route
-								path="/admin/*"
-								element={
-									<ProtectedRoute allowedRoles={["admin"]}>
-										<AdminLayout />
-									</ProtectedRoute>
-								}
-							/>
-							<Route
-								path="/teacher/*"
-								element={
-									<ProtectedRoute allowedRoles={["teacher"]}>
-										<TeacherLayout />
-									</ProtectedRoute>
-								}
-							/>
-							<Route
-								path="/student/*"
-								element={
-									<ProtectedRoute allowedRoles={["student"]}>
-										<StudentLayout />
-									</ProtectedRoute>
-								}
-							/>
-							<Route
-								path="/parent/*"
-								element={
-									<ProtectedRoute allowedRoles={["parent"]}>
-										<ParentLayout />
-									</ProtectedRoute>
-								}
-							/>
+						<Route
+							path="/admin/*"
+							element={
+								<ProtectedRoute allowedRoles={["admin"]}>
+									<CallHandler />
+									<AdminLayout />
+								</ProtectedRoute>
+							}
+						/>
+						<Route
+							path="/teacher/*"
+							element={
+								<ProtectedRoute allowedRoles={["teacher"]}>
+									<CallHandler />
+									<TeacherLayout />
+								</ProtectedRoute>
+							}
+						/>
+						<Route
+							path="/student/*"
+							element={
+								<ProtectedRoute allowedRoles={["student"]}>
+									<CallHandler />
+									<StudentLayout />
+								</ProtectedRoute>
+							}
+						/>
+						<Route
+							path="/parent/*"
+							element={
+								<ProtectedRoute allowedRoles={["parent"]}>
+									<CallHandler />
+									<ParentLayout />
+								</ProtectedRoute>
+							}
+						/>
 
-							<Route path="*" element={<Page404 />} />
-						</>
+						<Route path="*" element={<Page404 />} />
+					</>
 				</Routes>
 			</Suspense>
 		</HashRouter>
