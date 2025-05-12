@@ -13,7 +13,7 @@ injectStore(store);
 createRoot(document.getElementById("root")).render(
 	<Provider store={store}>
 		<StrictMode>
-			<GoogleOAuthProvider clientId="107288105709310572218">
+			<GoogleOAuthProvider clientId={import.meta.env.GOOGLE_CLIENT_ID}>
 				<App />
 			</GoogleOAuthProvider>
 		</StrictMode>
