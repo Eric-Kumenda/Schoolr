@@ -85,6 +85,11 @@ const adminNav = [
 			},
 			{
 				component: CNavItem,
+				name: "Students Upload",
+				to: "/admin/students/upload",
+			},
+			{
+				component: CNavItem,
 				name: "Profile",
 				to: "/admin/students/profile",
 			},

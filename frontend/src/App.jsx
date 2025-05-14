@@ -1,5 +1,5 @@
 import React, { useEffect, Suspense } from "react";
-import { HashRouter, Routes, Route } from "react-router-dom";
+import { HashRouter, Routes, Route, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 
 import { CSpinner, useColorModes } from "@coreui/react";
@@ -18,6 +18,8 @@ import "./scss/custom.scss";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { loadUser } from "./store/authSlice";
 import CallHandler from "./views/pages/Chat/CallHandler";
+import { Toast_Live } from "./components/Toast_Live";
+import { addToast } from "./store/toastSlice";
 //import "./scss/customBootstrap.scss";
 
 // Containers
@@ -28,12 +30,7 @@ const StudentLayout = React.lazy(() => import("./layout/StudentLayout"));
 
 // Pages
 const Login = React.lazy(() => import("./views/pages/Login/Login"));
-const RegisterStaff = React.lazy(() =>
-	import("./views/pages/Register/NewStaffReg")
-);
-const RegisterStudent = React.lazy(() =>
-	import("./views/pages/Register/NewStudent")
-);
+
 const Page404 = React.lazy(() => import("./views/pages/page404/Page404"));
 const Page500 = React.lazy(() => import("./views/pages/page500/Page500"));
 
@@ -61,7 +58,8 @@ const App = () => {
 	}, []);
 
 	useEffect(() => {
-		dispatch(loadUser());
+		const LoadUser = async () => await dispatch(loadUser());
+		LoadUser();
 	}, []);
 
 	return (
@@ -72,6 +70,7 @@ const App = () => {
 						<CSpinner color="body" />
 					</div>
 				}>
+				<Toast_Live />
 				<Routes>
 					<Route path="/login" element={<Login />} />
 					<>

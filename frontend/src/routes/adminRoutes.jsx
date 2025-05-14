@@ -12,8 +12,8 @@ const PendingRequests = React.lazy(() =>
 const CreateSchool = React.lazy(() =>
 	import("../views/pages/SchoolMembership/CreateSchool")
 );
-const TeacherDashboard = React.lazy(() =>
-	import("../components/Dashboard/TeacherDashboard")
+const UploadStudents = React.lazy(() =>
+	import("../views/pages/SchoolMembership/UploadStudents")
 );
 const ParentDashboard = React.lazy(() =>
 	import("../components/Dashboard/ParentDashboard")
@@ -55,13 +55,6 @@ const adminRoutes = [
 		element: PendingRequests,
 	},
 	{
-		path: "/school",
-		exact: true,
-		name: "School Profile",
-		element: Streams,
-		
-	},
-	{
 		path: "/school/profile",
 		exact: true,
 		name: "Students",
@@ -73,6 +66,13 @@ const adminRoutes = [
 		exact: true,
 		name: "Students",
 		element: Streams,
+		
+	},
+	{
+		path: "/students/upload",
+		exact: true,
+		name: "Students Upload",
+		element: UploadStudents,
 		
 	},
 	{

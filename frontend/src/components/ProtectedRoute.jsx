@@ -1,25 +1,33 @@
 // src/components/Auth/ProtectedRoute.jsx
-import React from 'react'
-import { Navigate } from 'react-router-dom'
-import { useSelector } from 'react-redux'
+import React from "react";
+import { Navigate } from "react-router-dom";
+import { useSelector } from "react-redux";
+import { CSpinner } from "@coreui/react";
 
 const ProtectedRoute = ({ children, allowedRoles }) => {
-  const {role} = useSelector((state) => state.auth)
-    const loginState = useSelector(
-      (state) =>
-        state.auth.token !== null &&
-        state.auth.email !== null &&
-        state.auth.role !== null
-    );
-  //console.log(role)
+	const { role, token, isReady } = useSelector((state) => state.auth);
 
-  if (!loginState) return <Navigate to="/login" replace />
+	// Wait for auth state to be ready before doing anything
+	if (!isReady) {
+		return (
+			<div className="pt-3 text-center">
+				<CSpinner color="primary" />
+			</div>
+		);
+	}
 
-  if (allowedRoles && !allowedRoles.includes(role)) {
-    return <Navigate to="/404" replace />
-  }
+	// If no token or role, redirect to login
+	if (!token || !role) {
+		return <Navigate to="/login" replace />;
+	}
 
-  return children
-}
+	// If role is not in allowed list, redirect to unauthorized page
+	if (allowedRoles && !allowedRoles.includes(role)) {
+		return <Navigate to="/unauthorized" replace />;
+	}
 
-export default ProtectedRoute
+	// Otherwise, allow access
+	return children;
+};
+
+export default ProtectedRoute;

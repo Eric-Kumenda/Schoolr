@@ -8,6 +8,7 @@ import { getSchoolProfile } from "../../../store/schoolSlice";
 import { fetchConversations } from "../../../store/chatSlice";
 import BarLoader from "../../../components/loaders/BarLoader";
 import { CSpinner } from "@coreui/react";
+import { addToast } from "../../../store/toastSlice";
 
 const Login = () => {
 	const dispatch = useDispatch();
@@ -22,38 +23,25 @@ const Login = () => {
 
 	const handleSubmit = async (e) => {
 		e.preventDefault();
-		const result = await dispatch(loginUser(formData));
-		const schoolResult = await dispatch(
-			getSchoolProfile({ schoolId: result?.payload?.user?.schoolId })
-		);
-		//await dispatch(fetchConversations(result?.payload?.user?.userId));
-		if (result?.payload?.token && schoolResult) {
-			switch (result.payload.user.role) {
-				case "admin":
-					navigate("/admin");
-					break;
-				case "teacher":
-					navigate("/teacher");
-					break;
-				case "student":
-					navigate("/student");
-					break;
-				case "parent":
-					navigate("/parent");
-					break;
-				default:
-					navigate("/unauthorized");
-			}
-		}
-	};
-
-	const handleGoogleSuccess = async (credentialResponse) => {
 		try {
-			const result = await dispatch(
-				googleLoginUser(credentialResponse.credential)
+			const result = await dispatch(loginUser(formData));
+			const schoolResult = await dispatch(
+				getSchoolProfile({ schoolId: result?.payload?.user?.schoolId })
 			);
-
-			if (result?.payload?.token) {
+			//await dispatch(fetchConversations(result?.payload?.user?.userId));
+			if (result?.payload?.token && schoolResult) {
+				dispatch(
+					addToast({
+						id: Date.now(),
+						message:
+							"User " +
+							result.payload.user.first_name +
+							" Logged In",
+						title: "Success",
+						color: "#28a745",
+						timestamp: Date.now(),
+					})
+				);
 				switch (result.payload.user.role) {
 					case "admin":
 						navigate("/admin");
@@ -72,7 +60,64 @@ const Login = () => {
 				}
 			}
 		} catch (error) {
-			console.error("Google login failed:", error);
+			dispatch(
+				addToast({
+					id: Date.now(),
+					message: error,
+					title: "Error",
+					color: "#e55353",
+					timestamp: Date.now(),
+				})
+			);
+		}
+	};
+
+	const handleGoogleSuccess = async (credentialResponse) => {
+		try {
+			const result = await dispatch(
+				googleLoginUser(credentialResponse.credential)
+			);
+
+			if (result?.payload?.token) {
+				dispatch(
+					addToast({
+						id: Date.now(),
+						message:
+							"User " +
+							result.payload.user.first_name +
+							" Logged In",
+						title: "Success",
+						color: "#28a745",
+						timestamp: Date.now(),
+					})
+				);
+				switch (result.payload.user.role) {
+					case "admin":
+						navigate("/admin");
+						break;
+					case "teacher":
+						navigate("/teacher");
+						break;
+					case "student":
+						navigate("/student");
+						break;
+					case "parent":
+						navigate("/parent");
+						break;
+					default:
+						navigate("/unauthorized");
+				}
+			}
+		} catch (error) {
+			dispatch(
+				addToast({
+					id: Date.now(),
+					message: error,
+					title: "Error",
+					color: "#e55353",
+					timestamp: Date.now(),
+				})
+			);
 		}
 	};
 	useEffect(() => {
@@ -163,7 +208,11 @@ const Login = () => {
 								<button
 									className="btn btn-primary w-100 py-2"
 									type={loginLoading ? "button" : "submit"}>
-									{loginLoading ? <CSpinner color="light" /> : "Login"}
+									{loginLoading ? (
+										<CSpinner color="light" />
+									) : (
+										"Login"
+									)}
 								</button>
 							</div>
 							<hr />

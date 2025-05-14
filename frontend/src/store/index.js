@@ -3,6 +3,7 @@ import appReducer from "./appSlice";
 import authReducer from "./authSlice";
 import schoolReducer from "./schoolSlice";
 import chatReducer from "./chatSlice";
+import toastReducer from "./toastSlice";
 
 const store = configureStore({
 	reducer: {
@@ -10,6 +11,7 @@ const store = configureStore({
 		auth: authReducer,
 		school: schoolReducer,
 		chat: chatReducer,
+		toast: toastReducer,
 	},
 });
 

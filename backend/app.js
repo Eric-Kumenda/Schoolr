@@ -64,9 +64,11 @@ app.use(passport.initialize());
 
 const authRoutes = require("./routes/authRoutes");
 const schoolRoutes = require("./routes/schoolRoutes");
+const linkRoutes = require("./routes/linkRoutes");
 
 app.use("/api/auth", authRoutes);
 app.use("/api/school", schoolRoutes);
+app.use("/api/link", linkRoutes);
 app.use("/api/students", require("./routes/studentRoutes"));
 app.use("/api/chat", require("./routes/chatRoutes"));
 
