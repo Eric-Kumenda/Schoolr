@@ -15,16 +15,23 @@ const CreateSchool = React.lazy(() =>
 const UploadStudents = React.lazy(() =>
 	import("../views/pages/SchoolMembership/UploadStudents")
 );
+const UploadTeachers = React.lazy(() =>
+	import("../views/pages/SchoolMembership/UploadTeachers")
+);
 const ParentDashboard = React.lazy(() =>
 	import("../components/Dashboard/ParentDashboard")
 );
 const StudentDashboard = React.lazy(() =>
 	import("../components/Dashboard/StudentDashboard")
 );
-const Streams = React.lazy(() => import("../views/students/Streams"));
+const StudentList = React.lazy(() => import("../views/students/StudentList"));
+const TeachersList = React.lazy(() => import("../views/teachers/TeachersList"));
 const Classes = React.lazy(() => import("../views/students/Classes"));
 const StudentProfile = React.lazy(() =>
 	import("../views/students/StudentProfile")
+);
+const TeacherProfile = React.lazy(() =>
+	import("../views/teachers/TeacherProfile")
 );
 const Chat = React.lazy(() => import("../views/pages/Chat/Chat"));
 const NotFound = React.lazy(() => import("../views/pages/page404/Page404"));
@@ -58,50 +65,61 @@ const adminRoutes = [
 		path: "/school/profile",
 		exact: true,
 		name: "Students",
-		element: Streams,
-		
+		element: StudentList,
 	},
 	{
 		path: "/students",
 		exact: true,
 		name: "Students",
-		element: Streams,
-		
+		element: StudentList,
 	},
 	{
 		path: "/students/upload",
 		exact: true,
 		name: "Students Upload",
 		element: UploadStudents,
-		
 	},
 	{
-		path: "/students/streams",
+		path: "/teachers/upload",
 		exact: true,
-		name: "Streams",
-		element: Streams,
-		
+		name: "Teachers Upload",
+		element: UploadTeachers,
+	},
+	{
+		path: "/teachers/list",
+		exact: true,
+		name: "Teachers List",
+		element: TeachersList,
+	},
+	{
+		path: "/students/list",
+		exact: true,
+		name: "Students List",
+		element: StudentList,
 	},
 	{
 		path: "/students/classes",
 		exact: true,
 		name: "Classes",
 		element: Classes,
-		
 	},
 	{
 		path: "/students/profile",
 		exact: true,
 		name: "Student Profile",
 		element: StudentProfile,
-		
+	},
+	{
+		path: "/teachers/profile",
+		exact: true,
+		name: "Teacher Profile",
+		element: TeacherProfile,
 	},
 	{
 		path: "/chat",
 		exact: true,
 		name: "Messages",
 		element: Chat,
-		
 	},
 
 	{

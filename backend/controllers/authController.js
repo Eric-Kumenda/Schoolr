@@ -128,6 +128,7 @@ exports.refresh = async (req, res) => {
 				last_name: user.last_name,
 				email: user.email,
 				role: user.role,
+				schoolId: user.schoolId,
 			},
 		});
 	} catch (err) {

@@ -12,16 +12,6 @@ const adminNav = [
 				name: "Summary",
 				to: "/admin/dashboard",
 			},
-			{
-				component: CNavItem,
-				name: "Messages",
-				to: "/admin/dashboard/badges",
-			},
-			{
-				component: CNavItem,
-				name: "Schedule",
-				to: "/admin/dashboard/schedule",
-			},
 		],
 	},
 	{
@@ -54,17 +44,22 @@ const adminNav = [
 			{
 				component: CNavItem,
 				name: "Teachers",
-				to: "/notifications/alerts",
+				to: "/admin/teachers/list",
 			},
 			{
 				component: CNavItem,
-				name: "Non-Teaching",
-				to: "/notifications/badges",
+				name: "Teachers Upload",
+				to: "/admin/teachers/upload",
 			},
+			// {
+			// 	component: CNavItem,
+			// 	name: "Non-Teaching",
+			// 	to: "/notifications/badges",
+			// },
 			{
 				component: CNavItem,
 				name: "Profile",
-				to: "/notifications/modals",
+				to: "/admin/teachers/profile",
 			},
 		],
 	},
@@ -75,8 +70,8 @@ const adminNav = [
 		items: [
 			{
 				component: CNavItem,
-				name: "Streams",
-				to: "/admin/students/streams",
+				name: "List",
+				to: "/admin/students/list",
 			},
 			{
 				component: CNavItem,

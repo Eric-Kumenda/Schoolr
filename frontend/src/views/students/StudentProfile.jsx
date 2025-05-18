@@ -1,270 +1,286 @@
-import { cilChartPie } from "@coreui/icons";
-import CIcon from "@coreui/icons-react";
-import {
-	CCol,
-	CDropdown,
-	CDropdownItem,
-	CDropdownMenu,
-	CDropdownToggle,
-	CNav,
-	CNavItem,
-	CNavLink,
-	CRow,
-	CTable,
-	CTableBody,
-	CTableDataCell,
-	CTableHead,
-	CTableHeaderCell,
-	CTableRow,
-	CWidgetStatsF,
-} from "@coreui/react";
+import { CAvatar, CButton, CForm, CFormInput, CSpinner } from "@coreui/react";
 import React, { useEffect, useState } from "react";
-import { Link, NavLink, useSearchParams } from "react-router-dom";
-import legendsData from "../../assets/sample_data/legends";
-
-const streams = ["form1", "form2", "form3", "form4"];
-
 import avatar4 from "./../../assets/images/avatars/4.jpg";
+import { useDispatch, useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
+import { updateSchoolStudent } from "../../store/schoolSlice";
+import { addToast } from "../../store/toastSlice";
 
-const StudentProfile = () => {
-	const [start, setStart] = useState(0);
-	const [activeSelection, setActiveSelection] = useState(null);
-	const itemsPerPage = 10; // No of items to display per page
+const StudentProfile = ({ isModal }) => {
+	const dispatch = useDispatch();
+	const navigate = useNavigate();
+	const selectedStudent = useSelector(
+		(state) => state.school.selectedStudent
+	);
+	const [studentData, setStudentData] = useState(null);
+	const [isEditing, setIsEditing] = useState(false);
+	useEffect(() => {
+		// Initialize local state when selectedStudent changes
+		if (selectedStudent) {
+			setStudentData({ ...selectedStudent });
+		}
+	}, [selectedStudent]);
 
-	// Calculate the end index
-	const end = start + itemsPerPage;
-
-	// Get the current slice of data
-	const currentData = legendsData.slice(start, end);
-
-	const handleRecordClick = (AdmNo) => {
-		setActiveSelection(AdmNo);
+	const handleInputChange = (event) => {
+		const { id, value } = event.target;
+		setStudentData({ ...studentData, [id]: value });
 	};
 
-	const [searchParams, setSearchParams] = useSearchParams();
-	const currentStream = searchParams.get("stream") || "form1";
+	const handleEditClick = () => {
+		setIsEditing(true);
+	};
 
-	// useEffect(() => {
-	// 	console.log(activeSelection);
-	// }, [activeSelection]);
+	const handleSaveClick = async () => {
+		if (studentData && studentData._id && studentData !== selectedStudent) {
+			const res = await dispatch(updateSchoolStudent(studentData)); // Dispatch the update Thunk
+			// Optionally, show a success message or refetch data
+			if (res?.payload?.message) {
+				dispatch(
+					addToast({
+						id: Date.now(),
+						message: res.payload.message,
+						title: "Success",
+						color: "#28a745",
+						timestamp: Date.now(),
+					})
+				);
+				setIsEditing(false);
+			} else if (res?.error) {
+				dispatch(
+					addToast({
+						id: Date.now(),
+						message: res.payload,
+						title: "Error",
+						color: "#e55353",
+						timestamp: Date.now(),
+					})
+				);
+			}
+		}
+	};
 
-	return (
-		<>
-			<div className="card mb-3">
-				<div className="card-body d-flex flex-wrap flex-between-center">
-					<div className="col">
-						<h6 className="text-primary">Learner</h6>
-						<h5 className="mb-0">Michael Giacchino</h5>
+	const handleDiscardClick = () => {
+		setStudentData({ ...selectedStudent }); // Reset to original data
+		setIsEditing(false);
+		dispatch(
+			addToast({
+				id: Date.now(),
+				message: "Changes Discarded Successfully",
+				title: "Success",
+				color: "#28a745",
+				timestamp: Date.now(),
+			})
+		);
+	};
+	const redirect = () =>
+		setTimeout(() => navigate("/admin/students/list"), 2000);
+
+	if (studentData) {
+		return (
+			<div className="container-fluid">
+				{isEditing && !isModal && (
+					<div className="row mb-3 position-fixed fixed-bottom bg-body w-100">
+						<div className="col d-flex justify-content-end me-md-5">
+							<CButton
+								color="primary"
+								className="me-2"
+								onClick={handleSaveClick}>
+								Save Changes
+							</CButton>
+							<CButton
+								color="secondary"
+								onClick={handleDiscardClick}>
+								Discard Changes
+							</CButton>
+						</div>
 					</div>
-					<div className="col d-flex justify-content-end">
-						<button
-							className="btn btn-primary btn-md me-2"
-							type="button">
-							<i className="fa-regular fa-envelope"></i>{" "}
-							<span className="d-none d-md-inline">Message</span>
-						</button>
-						<button
-							className="btn btn-outline-secondary btn-md"
-							type="button">
-							<i className="fa-regular fa-envelope"></i>{" "}
-							<span className="d-none d-md-inline">
-								Followers
+				)}
+				<div className="row mb-4 border shadow rounded ps-5 py-3">
+					<div className="col col-auto d-flex justify-content-center">
+						<CAvatar
+							src={avatar4}
+							size="md"
+							className="w-100 h-100"
+						/>
+					</div>
+					<div className="col ps-3">
+						<p className="fw-bold fs-4 mb-1">{`${
+							studentData.first_name
+						} ${studentData.middle_name || ""} ${
+							studentData.surname
+						}`}</p>
+						<p className="mb-1">
+							Adm No:{" "}
+							<span className="fw-bold">
+								{studentData.adm_no}
 							</span>
-						</button>
+						</p>
+						<p>
+							Form {studentData.current_study_year}{" "}
+							{studentData.stream}
+						</p>
 					</div>
 				</div>
-			</div>
-
-			<div className="row g-3 mb-3">
-				<div className="col col-12">
-					<div className="row g-3">
-						<div className="col-12">
-							<div className="card font-sans-serif">
-								<div className="card-body d-flex gap-3 flex-column flex-sm-row align-items-center">
-									<img
-										className="rounded-3"
-										src={avatar4}
-										alt="Student Profile"
-										width="112"
-									/>
-									<table className="table table-borderless fs-10 fw-medium mb-0">
-										<tbody>
-											<tr>
-												<td
-													className="p-1"
-													style={{ width: "35%" }}>
-													Last Online:
-												</td>
-												<td className="p-1 text-600">
-													3 hours ago
-												</td>
-											</tr>
-											<tr>
-												<td
-													className="p-1"
-													style={{ width: "35%" }}>
-													Joined:
-												</td>
-												<td className="p-1 text-600">
-													2021/01/12 23:13
-												</td>
-											</tr>
-											<tr>
-												<td
-													className="p-1"
-													style={{ width: "35%" }}>
-													Email:
-												</td>
-												<td className="p-1">
-													<a
-														className="text-600 text-decoration-none"
-														href="mailto:goodguy@nicemail.com">
-														goodguy@nicemail.com{" "}
-													</a>
-													<span className="badge rounded-pill badge-subtle-success d-md-inline-block ms-md-2">
-														<span>Verified</span>
-														<i className="fa-regular fa-check ms-2"></i>
-													</span>
-												</td>
-											</tr>
-											<tr>
-												<td
-													className="p-1"
-													style={{ width: "35%" }}>
-													Mobile No:
-												</td>
-												<td className="p-1">
-													<a
-														className="text-600 text-decoration-none"
-														href="tel:+01234567890 ">
-														+254-112-345567{" "}
-													</a>
-													<span className="badge rounded-pill badge-subtle-primary d-md-inline-block ms-md-2">
-														<span>
-															2-step verification
-														</span>
-														<i className="fa-regular fa-link ms-2"></i>
-													</span>
-												</td>
-											</tr>
-										</tbody>
-									</table>
-									<div className="dropdown position-absolute top-0 end-0 m-3">
-										<CDropdown alignment="end">
-											<CDropdownToggle color="">
-												<i className="fa-regular fa-ellipsis-h ms-2"></i>
-											</CDropdownToggle>
-											<CDropdownMenu>
-												<CDropdownItem as={Link} to="/">
-													Action
-												</CDropdownItem>
-												<CDropdownItem as={Link} to="/">
-													Another action
-												</CDropdownItem>
-												<li>
-													<hr class="dropdown-divider" />
-												</li>
-												<CDropdownItem as={Link} className="text-danger" to="/">
-													Sth else here
-												</CDropdownItem>
-											</CDropdownMenu>
-										</CDropdown>
-										{/* <button
-											className="btn btn-link btn-reveal text-600 btn-sm dropdown-toggle dropdown-caret-none"
-											type="button"
-											id="studentInfoDropdown"
-											data-bs-toggle="dropdown"
-											data-boundary="viewport"
-											aria-haspopup="true"
-											aria-expanded="false">
-											<i className="fa-regular fa-ellipsis-h ms-2"></i>
-										</button>
-										<div
-											className="dropdown-menu dropdown-menu-end border py-2"
-											aria-labelledby="studentInfoDropdown">
-											<a
-												className="dropdown-item"
-												href="#!">
-												View Profile
-											</a>
-											<a
-												className="dropdown-item"
-												href="#!">
-												Enrolled Courses
-											</a>
-											<div className="dropdown-divider"></div>
-											<a
-												className="dropdown-item text-danger"
-												href="#!">
-												Logout
-											</a>
-										</div> */}
-									</div>
+				{/* ... other student details ... */}
+				<div className="row mb-4 border shadow rounded py-3">
+					<div className="col">
+						<div className="row mb-3">
+							{!isEditing || isModal ? (
+								<div className="col col-12 d-flex align-items-start justify-content-end">
+									<button
+										className="btn rounded btn-outline-secondary w-auto"
+										onClick={
+											isModal
+												? () =>
+														navigate(
+															"/admin/students/profile"
+														)
+												: handleEditClick
+										}>
+										<i className="fa-regular fa-pen"></i>
+									</button>
 								</div>
+							) : (
+								""
+							)}
+							<div className="col-12">
+								<span className="fw-bold fs-4">
+									Student Information
+								</span>
 							</div>
+						</div>
+						<div className="row g-3">
+							<div className="col col-12">
+								<CFormInput
+									type="text"
+									id="surname"
+									label="Surname"
+									placeholder="Surname"
+									value={studentData.surname || ""}
+									disabled={isModal || !isEditing}
+									onChange={handleInputChange}
+								/>
+							</div>
+							<div className="col col-12 col-md-6">
+								<CFormInput
+									type="text"
+									id="first_name"
+									label="First Name"
+									placeholder="First Name"
+									value={studentData.first_name || ""}
+									disabled={isModal || !isEditing}
+									onChange={handleInputChange}
+								/>
+							</div>
+							<div className="col col-12 col-md-6">
+								<CFormInput
+									type="text"
+									id="middle_name"
+									label="Middle Name"
+									placeholder="Middle Name"
+									value={studentData.middle_name || ""}
+									disabled={isModal || !isEditing}
+									onChange={handleInputChange}
+								/>
+							</div>
+							{/* Add more fields here */}
+							<div className="col col-12 col-md-6">
+								<CFormInput
+									type="text"
+									id="birth_cert_no"
+									label="Birth Certificate No"
+									placeholder="Birth Certificate No"
+									value={studentData.birth_cert_no || ""}
+									disabled={isModal || !isEditing}
+									onChange={handleInputChange}
+								/>
+							</div>
+							<div className="col col-12 col-md-6">
+								<CFormInput
+									type="date"
+									id="DOB"
+									label="Date of Birth"
+									value={
+										studentData.DOB
+											? studentData.DOB.substring(0, 10)
+											: ""
+									}
+									disabled={isModal || !isEditing}
+									onChange={handleInputChange}
+								/>
+							</div>
+							{/* ... add all other relevant student fields with similar CFormInput components */}
 						</div>
 					</div>
 				</div>
-			</div>
-
-			{/* {currentStream.replace("form", "Form ")} */}
-			<CTable className="mt-3" hover bordered>
-				<CTableHead>
-					<CTableRow>
-						<CTableHeaderCell
-							scope="col"
-							className="bg-body-tertiary rounded-start">
-							Adm No
-						</CTableHeaderCell>
-						<CTableHeaderCell
-							scope="col"
-							className="bg-body-tertiary">
-							Name
-						</CTableHeaderCell>
-						<CTableHeaderCell
-							scope="col"
-							className="bg-body-tertiary">
-							Stream
-						</CTableHeaderCell>
-						<CTableHeaderCell
-							scope="col"
-							className="bg-body-tertiary rounded-end">
-							Actions
-						</CTableHeaderCell>
-					</CTableRow>
-				</CTableHead>
-				<CTableBody>
-					{currentData.map((record) => {
-						return (
-							<CTableRow key={record.ADMNO}>
-								<CTableHeaderCell
-									scope="row"
-									className="ps-2 rounded-start bg-body-subtle">
-									{record.ADMNO}
-								</CTableHeaderCell>
-								<CTableDataCell className="bg-body-subtle">
-									{record.NAME}
-								</CTableDataCell>
-								<CTableDataCell className="bg-body-subtle">
-									{record.STR}
-								</CTableDataCell>
-								<CTableDataCell className="rounded-end bg-body-subtle">
+				{/* Parent/Guardian Information sections - you'll implement these similarly */}
+				<div className="row mb-4 border shadow rounded py-3">
+					<div className="col">
+						<div className="row mb-3">
+							{!isEditing || isModal ? (
+								<div className="col col-12 d-flex align-items-start justify-content-end">
 									<button
-										className="btn btn-outline-warning px-3"
-										type="button"
-										onClick={() =>
-											handleRecordClick(record.ADMNO)
+										className="btn rounded btn-outline-secondary w-auto"
+										onClick={
+											isModal
+												? () =>
+														navigate(
+															"/admin/students/profile"
+														)
+												: handleEditClick
 										}>
-										<i className="fa-regular fa-file-user"></i>
+										<i className="fa-regular fa-pen"></i>
 									</button>
-								</CTableDataCell>
-							</CTableRow>
-						);
-					})}
-				</CTableBody>
-			</CTable>
-		</>
-	);
+								</div>
+							) : (
+								""
+							)}
+							<div className="col-12">
+								<span className="fw-bold fs-4">
+									Parent / Guardian 1 Information
+								</span>
+							</div>
+						</div>
+						<div className="row g-3">
+							{/* Add parent/guardian 1 fields here, bind to local state if you want to edit them */}
+							<div className="col col-12">
+								<CFormInput
+									type="text"
+									id="parent1_surname" // Example ID
+									label="Surname"
+									placeholder="Surname"
+									value={studentData.parent1_surname || ""} // Assuming this field exists
+									disabled={isModal || !isEditing}
+									onChange={handleInputChange}
+								/>
+							</div>
+							{/* ... other parent 1 fields ... */}
+						</div>
+					</div>
+				</div>
+
+				{/* Parent / Guardian 2 Information - implement similarly */}
+			</div>
+		);
+	} else if (selectedStudent) {
+		return (
+			<div className="row d-flex justify-content-center">
+				<div className="col col-auto">
+					<CSpinner color="info" className="text-center" />
+				</div>
+			</div>
+		);
+	} else {
+		redirect();
+		return (
+			<div className="row d-flex justify-content-center">
+				<div className="col col-auto">
+					<CSpinner color="danger" className="text-center" />
+					<p>No Currently Selected Students</p>
+				</div>
+			</div>
+		);
+	}
 };
 
 export default StudentProfile;

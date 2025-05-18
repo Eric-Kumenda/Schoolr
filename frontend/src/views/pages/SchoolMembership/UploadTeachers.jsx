@@ -18,19 +18,15 @@ import {
 	CFormInput,
 } from "@coreui/react";
 import { useDispatch, useSelector } from "react-redux";
+import { uploadTeacherData } from "../../../store/schoolSlice";
 import * as XLSX from "xlsx";
-import { useEffect } from "react";
-import { uploadStudentData } from "../../../store/schoolSlice";
 import { addToast } from "../../../store/toastSlice";
 
-const UploadStudents = () => {
+const UploadTeachers = () => {
 	const [file, setFile] = useState(null);
-	const [cohort, setCohort] = useState("");
 	const [spreadsheetData, setSpreadsheetData] = useState(null);
 	const [selectedSheet, setSelectedSheet] = useState(null);
 	const [fieldMappings, setFieldMappings] = useState({});
-	const [startPage, setStartPage] = useState(1);
-	const [pageCount, setPageCount] = useState(5);
 	const schoolId = useSelector((state) => state.auth.schoolId);
 	const dispatch = useDispatch();
 
@@ -56,7 +52,6 @@ const UploadStudents = () => {
 	const handleSheetChange = (e) => {
 		const sheetName = e.target.value;
 		setSelectedSheet(sheetName);
-		// Initialize field mappings based on the new sheet's headers
 		if (spreadsheetData && spreadsheetData.Sheets[sheetName]) {
 			const headers =
 				XLSX.utils.sheet_to_json(spreadsheetData.Sheets[sheetName], {
@@ -64,7 +59,7 @@ const UploadStudents = () => {
 				})[0] || [];
 			const initialMappings = {};
 			headers.forEach((header) => {
-				initialMappings[header] = ""; // Initially no mapping
+				initialMappings[header] = "";
 			});
 			setFieldMappings(initialMappings);
 		}
@@ -77,21 +72,12 @@ const UploadStudents = () => {
 		}));
 	};
 
-	const handleCohortChange = (e) => {
-		setCohort(e.target.value);
-	};
-
 	const handleSubmit = useCallback(
 		async (e) => {
 			e.preventDefault();
 
 			if (!file || !selectedSheet) {
 				alert("Please select a file and a sheet.");
-				return;
-			}
-
-			if (!cohort) {
-				alert("Please enter the cohort for this upload.");
 				return;
 			}
 
@@ -105,8 +91,11 @@ const UploadStudents = () => {
 						const field = fieldMappings[header];
 						let value = row[header];
 
-						// Convert comma-separated string fields (like subjects_taught and subjects) into arrays
-						if (field === "subjects" && typeof value === "string") {
+						// Convert subjects_taught from comma-separated string to array
+						if (
+							field === "subjects_taught" &&
+							typeof value === "string"
+						) {
 							value = value
 								.split(",")
 								.map((s) => s.trim())
@@ -121,10 +110,9 @@ const UploadStudents = () => {
 
 			try {
 				const res = await dispatch(
-					uploadStudentData({
-						students: uploadData,
+					uploadTeacherData({
+						teachersData: uploadData,
 						schoolId: schoolId,
-						cohort: cohort,
 					})
 				);
 				if (res?.payload?.message) {
@@ -137,7 +125,7 @@ const UploadStudents = () => {
 							timestamp: Date.now(),
 						})
 					);
-					// Navigate to student list page
+					// Navigate to teachers list page
 				} else if (res?.error) {
 					dispatch(
 						addToast({
@@ -161,7 +149,7 @@ const UploadStudents = () => {
 				);
 			}
 		},
-		[file, selectedSheet, cohort, fieldMappings, schoolId, dispatch]
+		[file, selectedSheet, fieldMappings, schoolId, dispatch]
 	);
 
 	const sheetNames = spreadsheetData?.SheetNames || [];
@@ -176,51 +164,33 @@ const UploadStudents = () => {
 		selectedSheet && spreadsheetData?.Sheets[selectedSheet]
 			? XLSX.utils.sheet_to_json(spreadsheetData.Sheets[selectedSheet])
 			: [];
-	const [sampleDataDisplay, setSampleDataDisplay] = useState();
-	useEffect(() => {
-		selectedSheet &&
-			sampleData &&
-			setSampleDataDisplay(
-				sampleData.slice(startPage - 1, startPage + pageCount - 1)
-			);
-	}, [startPage, pageCount, selectedSheet]);
 
 	const databaseFields = [
-		"adm_no",
+		"employee_number",
+		"kra_pin",
+		"national_id",
 		"first_name",
 		"middle_name",
 		"surname",
-		"birth_cert_no",
-		"DOB",
-		"kcpe_index_no",
-		"kcpe_year",
-		"current_study_year",
-		"stream",
-		"cohort",
-		"house",
-		"dorm",
-		"cube",
-		"nemis_no",
-		"nhif_no",
-		"subjects",
+		"subjects_taught",
 	];
 
 	return (
 		<CRow className="d-flex justify-content-center mb-4">
 			<CCol xs={12} md={10}>
-				<CCard className="mb-4 shadow border-0">
+				<CCard className="mb-4">
 					<CCardHeader>
-						<strong>Upload Student Data (Spreadsheet)</strong>
+						<strong>Upload Teacher Data (Spreadsheet)</strong>
 					</CCardHeader>
 					<CCardBody>
 						<CForm onSubmit={handleSubmit}>
 							<div className="mb-3">
-								<CFormLabel htmlFor="studentSpreadsheet">
-									Select Student Spreadsheet (.xlsx, .csv)
+								<CFormLabel htmlFor="teacherSpreadsheet">
+									Select Teacher Spreadsheet (.xlsx, .csv)
 								</CFormLabel>
 								<CFormInput
 									type="file"
-									id="studentSpreadsheet"
+									id="teacherSpreadsheet"
 									accept=".xlsx, .csv"
 									onChange={handleFileChange}
 									required
@@ -251,10 +221,10 @@ const UploadStudents = () => {
 
 							{selectedSheet && headers.length > 0 && (
 								<div className="mb-3">
-									<p className="text-center mt-2">
+									<CFormLabel>
 										Map Spreadsheet Columns to Database
 										Fields
-									</p>
+									</CFormLabel>
 									<CTable striped>
 										<CTableHead>
 											<CTableRow>
@@ -269,7 +239,7 @@ const UploadStudents = () => {
 										<CTableBody>
 											{headers.map((header, index) => (
 												<CTableRow key={index}>
-													<CTableDataCell className="text-center">
+													<CTableDataCell>
 														{header}
 													</CTableDataCell>
 													<CTableDataCell>
@@ -279,7 +249,6 @@ const UploadStudents = () => {
 																	header
 																] || ""
 															}
-															className="bg-transparent shadow-sm"
 															onChange={(e) =>
 																handleFieldMappingChange(
 																	header,
@@ -313,142 +282,77 @@ const UploadStudents = () => {
 							)}
 
 							{selectedSheet && sampleData.length > 0 && (
-								<>
-									<p className="mt-5 text-center w-100">
-										Sheet Data
-									</p>
-									<div className="mb-3 overflow-auto">
-										<CTable bordered small>
-											<CTableHead>
-												<CTableRow>
-													{headers.map(
-														(header, index) => (
-															<CTableHeaderCell
-																key={index}>
-																{header}
-															</CTableHeaderCell>
-														)
-													)}
-												</CTableRow>
-											</CTableHead>
-											<CTableBody>
-												{sampleDataDisplay &&
-													sampleDataDisplay.map(
-														(row, index) => (
-															<CTableRow
-																key={index}>
-																{headers.map(
-																	(
-																		header
-																	) => {
-																		let value =
-																			row[
-																				header
-																			];
+								<div className="mb-3">
+									<CFormLabel>Sample Data</CFormLabel>
+									<CTable bordered small>
+										<CTableHead>
+											<CTableRow>
+												{headers.map(
+													(header, index) => (
+														<CTableHeaderCell
+															key={index}>
+															{header}
+														</CTableHeaderCell>
+													)
+												)}
+											</CTableRow>
+										</CTableHead>
+										<CTableBody>
+											{sampleData
+												.slice(0, 5)
+												.map((row, index) => (
+													<CTableRow key={index}>
+														{headers.map(
+															(header) => {
+																let value =
+																	row[header];
 
-																		// Convert subjects (if present) to an array and stringify it for display
-																		if (
-																			header ===
-																				"subjects" &&
-																			typeof value ===
-																				"string"
-																		) {
-																			value =
-																				value
-																					.split(
-																						","
-																					)
-																					.map(
-																						(
-																							s
-																						) =>
-																							s.trim()
-																					)
-																					.filter(
-																						Boolean
-																					);
-																		}
+																// Convert subjects_taught (if present) to an array and stringify it for display
+																if (
+																	header ===
+																		"subjects_taught" &&
+																	typeof value ===
+																		"string"
+																) {
+																	value =
+																		value
+																			.split(
+																				","
+																			)
+																			.map(
+																				(
+																					s
+																				) =>
+																					s.trim()
+																			)
+																			.filter(
+																				Boolean
+																			);
+																}
 
-																		// Stringify the array if the value is an array
-																		return (
-																			<CTableDataCell
-																				key={
-																					header
-																				}>
-																				{Array.isArray(
+																// Stringify the array if the value is an array
+																return (
+																	<CTableDataCell
+																		key={
+																			header
+																		}>
+																		{Array.isArray(
+																			value
+																		)
+																			? JSON.stringify(
 																					value
-																				)
-																					? JSON.stringify(
-																							value
-																					  ) // Convert array to string for display
-																					: value}
-																			</CTableDataCell>
-																		);
-																	}
-																)}
-															</CTableRow>
-														)
-													)}
-											</CTableBody>
-										</CTable>
-									</div>
-									<p className="form-text text-muted text-center">
-										Showing a preview of {pageCount} rows.
-									</p>
-									<div className="row d-none">
-										<div className="col col-3">
-											<CFormLabel htmlFor="startPageCount">
-												Start Row
-											</CFormLabel>
-											<CFormInput
-												type="number"
-												id="startPageCount"
-												placeholder="Start Row"
-												min={1}
-												value={startPage}
-												onChange={(e) =>
-													setStartPage(e.target.value)
-												}
-												required
-											/>
-										</div>
-										<div className="col col-3">
-											<CFormLabel htmlFor="startPageCount">
-												Number of Rows
-											</CFormLabel>
-											<CFormInput
-												type="number"
-												id="startPageCount"
-												placeholder="No. of Rows"
-												min={1}
-												max={10}
-												value={pageCount}
-												onChange={(e) =>
-													setPageCount(e.target.value)
-												}
-												required
-											/>
-										</div>
-									</div>
-								</>
-							)}
-
-							{selectedSheet && (
-								<div className="my-3">
-									<CFormLabel htmlFor="cohortInput">
-										Cohort
-									</CFormLabel>
-									<CFormInput
-										type="text"
-										id="cohortInput"
-										placeholder="e.g., 2023"
-										value={cohort}
-										onChange={handleCohortChange}
-										required
-									/>
+																			  ) // Convert array to string for display
+																			: value}
+																	</CTableDataCell>
+																);
+															}
+														)}
+													</CTableRow>
+												))}
+										</CTableBody>
+									</CTable>
 									<small className="form-text text-muted">
-										Enter the cohort year for these
-										students.
+										Showing a preview of the first 5 rows.
 									</small>
 								</div>
 							)}
@@ -459,7 +363,7 @@ const UploadStudents = () => {
 										type="submit"
 										color="primary"
 										disabled={!selectedSheet}>
-										Upload Students
+										Upload Teachers
 									</CButton>
 								</div>
 							)}
@@ -471,4 +375,4 @@ const UploadStudents = () => {
 	);
 };
 
-export default UploadStudents;
+export default UploadTeachers;
