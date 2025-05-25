@@ -1,12 +1,7 @@
 const express = require("express");
 const router = express.Router();
 
-const passport = require("passport");
-const jwt = require("jsonwebtoken");
-
-const multer = require("multer");
-//const upload = multer({ storage: multer.memoryStorage() });
-
+const requireAdmin = require('../middleware/requireAdmin'); // Admin only
 const {
 	createSchool,
 	schoolInfo,
@@ -16,7 +11,8 @@ const {
 	getSchoolTeachers,
 	updateStudent,
 	updateTeacher,
-	querySchool
+	querySchool,
+	linkUserToSchool
 } = require("../controllers/schoolController");
 
 router.post("/create", createSchool);
@@ -26,7 +22,9 @@ router.post("/upload-teachers", uploadTeachers);
 router.get("/students/fetch/:schoolId", getSchoolStudents);
 router.get("/teachers/fetch/:schoolId", getSchoolTeachers);
 router.put("/students/update/:studentId", updateStudent);
-router.put("/teachers/update/:schoolId", updateTeacher);
+router.put("/teachers/update/:teacherId", updateTeacher);
 router.get("/fetch/:schoolId", querySchool);
+
+router.post('/admin/link-user-to-school', requireAdmin, linkUserToSchool);
 
 module.exports = router;

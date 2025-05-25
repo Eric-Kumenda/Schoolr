@@ -21,7 +21,7 @@ api.interceptors.response.use(
         const res = await api.get('/auth/refresh', {
           withCredentials: true,
         })
-        console.log(res.data.token)
+        //console.log(res.data.token)
         const newToken = res.data.token
 
         if (storeRef) {

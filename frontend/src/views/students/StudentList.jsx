@@ -56,14 +56,7 @@ const StudentList = () => {
 
 	useEffect(() => {
 		if (studentsData) {
-			// Flatten the nested student data
-			const flattenedStudents = studentsData.reduce((acc, cohort) => {
-				if (cohort.students && Array.isArray(cohort.students)) {
-					acc.push(...cohort.students);
-				}
-				return acc;
-			}, []);
-			setAllStudents(flattenedStudents);
+			setAllStudents(studentsData);
 		}
 	}, [studentsData]);
 
@@ -77,7 +70,18 @@ const StudentList = () => {
 			const houseMatch = !filterHouse || student.house === filterHouse;
 			const searchMatch =
 				!searchQuery ||
-				Object.values(student).some((value) =>
+				[
+					student.adm_no,
+					student.first_name,
+					student.middle_name,
+					student.surname,
+					student.stream,
+					student.dorm,
+					student.house,
+					student.kcpe_index_no,
+					student.nemis_no,
+					student.nhif_no,
+				].some((value) =>
 					String(value)
 						.toLowerCase()
 						.includes(searchQuery.toLowerCase())
@@ -133,7 +137,7 @@ const StudentList = () => {
 	return (
 		<CRow>
 			<CCol xs={12}>
-				<CCard className="border-0 shadow">
+				<CCard className="border-0 shadow bg-body">
 					<CCardHeader>
 						<strong>School Students</strong>
 					</CCardHeader>
@@ -284,9 +288,7 @@ const StudentList = () => {
 							</CModalHeader>
 							<CModalBody>
 								{selectedStudent && (
-									<StudentProfile
-										isModal={true}
-									/>
+									<StudentProfile isModal={true} />
 								)}
 							</CModalBody>
 							<CModalFooter>

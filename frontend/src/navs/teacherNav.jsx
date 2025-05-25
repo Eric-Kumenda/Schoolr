@@ -10,7 +10,7 @@ const teacherNav = [
 			{
 				component: CNavItem,
 				name: "Summary",
-				to: "/dashboard",
+				to: "/teacher",
 			},
 			{
 				component: CNavItem,
@@ -76,23 +76,13 @@ const teacherNav = [
 		items: [
 			{
 				component: CNavItem,
-				name: "Alerts",
-				to: "/notifications/alerts",
+				name: "Take Attendance",
+				to: "/teacher/attendance/take",
 			},
 			{
 				component: CNavItem,
-				name: "Badges",
-				to: "/notifications/badges",
-			},
-			{
-				component: CNavItem,
-				name: "Modal",
-				to: "/notifications/modals",
-			},
-			{
-				component: CNavItem,
-				name: "Toasts",
-				to: "/notifications/toasts",
+				name: "Student Attendance",
+				to: "/teacher/students/:studentId/attendance",
 			},
 		],
 	},
@@ -171,14 +161,8 @@ const teacherNav = [
 	{
 		component: CNavItem,
 		name: "Settings",
-		to: "/settings",
+		to: "/teacher/settings",
 		icon: <i className="fa-regular fa-gear nav-icon"></i>,
-	},
-	{
-		component: CNavItem,
-		name: "Login",
-		to: '/loginStudent',
-		icon: <i className="fa-regular fa-user-unlock nav-icon"></i>,
 	},
 ];
 

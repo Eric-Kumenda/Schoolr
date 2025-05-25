@@ -55,9 +55,22 @@ const Login = () => {
 					case "parent":
 						navigate("/parent");
 						break;
+					case "finance":
+						navigate("/finance");
+						break;
 					default:
 						navigate("/unauthorized");
 				}
+			} else {
+				dispatch(
+				addToast({
+					id: Date.now(),
+					message: "Server Unreachable",
+					title: "Error",
+					color: "#e55353",
+					timestamp: Date.now(),
+				})
+			);
 			}
 		} catch (error) {
 			dispatch(
@@ -158,7 +171,7 @@ const Login = () => {
 								</label>
 								<input
 									type="email"
-									className="form-control"
+									className="form-control bg-body"
 									id="usernameField"
 									name="email"
 									placeholder="name@mail.com"
@@ -179,7 +192,7 @@ const Login = () => {
 											passwordView ? "text" : "password"
 										}
 										id="passwordField"
-										className="form-control"
+										className="form-control bg-body"
 										name="password"
 										placeholder="******"
 										aria-label="Password"
@@ -238,9 +251,9 @@ const Login = () => {
 								<p className="text-center">
 									New User?{" "}
 									<Link
-										to="/registerStaff"
+										to="/register"
 										className="text-decoration-none">
-										Request for your ID
+										Create An Account
 									</Link>
 								</p>
 							</div>

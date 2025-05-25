@@ -178,6 +178,7 @@ const Chat = () => {
 						aria-describedby="searchClearButton"
 						value={query}
 						onChange={(e) => setQuery(e.target.value)}
+						className="bg-body"
 					/>
 					<CButton
 						type="button"
@@ -270,7 +271,7 @@ const Chat = () => {
 							return (
 								<CListGroupItem
 									key={index}
-									className={`d-flex align-items-center justify-content-between py-2 py-md-3 px-3 rounded mb-2 text-body shadow-sm ${
+									className={`d-flex align-items-center justify-content-between py-2 py-md-3 px-3 rounded mb-2 text-body bg-body border border-secoondary shadow-sm ${
 										convo.conversation_id === selectedChat
 											? "bg-body-tertiary border-1"
 											: "bd-body-secondary border-0"
@@ -371,6 +372,7 @@ const Chat = () => {
 					placement="end"
 					visible={visible}
 					onHide={() => setVisible(false)}
+					className="bg-body"
 					scroll>
 					<COffcanvasHeader>
 						<COffcanvasTitle>

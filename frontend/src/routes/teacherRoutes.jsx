@@ -1,8 +1,5 @@
 import React from "react";
 
-import ProtectedRoute from "../components/ProtectedRoute";
-import { element, exact } from "prop-types";
-
 const PendingRequests = React.lazy(() =>
 	import("../views/pages/SchoolMembership/PendingRequests")
 );
@@ -17,6 +14,8 @@ const Classes = React.lazy(() => import("../views/students/Classes"));
 const StudentProfile = React.lazy(() =>
 	import("../views/students/StudentProfile")
 );
+const TakeAttendance = React.lazy(() => import("../views/attendance/TakeAttendance"));
+const ViewStudentAttendanceSummary = React.lazy(() => import("../views/attendance/ViewStudentAttendanceSummary"));
 const Chat = React.lazy(() => import("../views/pages/Chat/Chat"));
 const NotFound = React.lazy(() => import("../views/pages/page404/Page404"));
 
@@ -86,7 +85,18 @@ const teacherRoutes = [
 		exact: true,
 		name: "Student Profile",
 		element: StudentProfile,
-		
+	},
+	{
+		path: "/attendance/take",
+		exact: true,
+		name: "Take Attendance",
+		element: TakeAttendance,
+	},
+	{
+		path: "/students/:studentId/attendance",
+		exact: true,
+		name: "Student Attendance",
+		element: ViewStudentAttendanceSummary,
 	},
 	{
 		path: "/chat",

@@ -82,7 +82,7 @@ const StudentProfile = ({ isModal }) => {
 					<div className="row mb-3 position-fixed fixed-bottom bg-body w-100">
 						<div className="col d-flex justify-content-end me-md-5">
 							<CButton
-								color="primary"
+								color={studentData===selectedStudent?'secondary':'primary'}
 								className="me-2"
 								onClick={handleSaveClick}>
 								Save Changes

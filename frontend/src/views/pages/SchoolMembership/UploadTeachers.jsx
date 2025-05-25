@@ -85,7 +85,7 @@ const UploadTeachers = () => {
 				spreadsheetData.Sheets[selectedSheet]
 			);
 			const uploadData = jsonData.map((row) => {
-				const mappedRow = {};
+				const mappedRow = {  };
 				for (const header in fieldMappings) {
 					if (fieldMappings[header]) {
 						const field = fieldMappings[header];

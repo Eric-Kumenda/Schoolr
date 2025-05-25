@@ -20,6 +20,7 @@ import { loadUser } from "./store/authSlice";
 import CallHandler from "./views/pages/Chat/CallHandler";
 import { Toast_Live } from "./components/Toast_Live";
 import { addToast } from "./store/toastSlice";
+import FinanceLayout from "./layout/FinanceLayout";
 //import "./scss/customBootstrap.scss";
 
 // Containers
@@ -110,6 +111,15 @@ const App = () => {
 								<ProtectedRoute allowedRoles={["parent"]}>
 									<CallHandler />
 									<ParentLayout />
+								</ProtectedRoute>
+							}
+						/>
+						<Route
+							path="/finance/*"
+							element={
+								<ProtectedRoute allowedRoles={["finance"]}>
+									<CallHandler />
+									<FinanceLayout />
 								</ProtectedRoute>
 							}
 						/>

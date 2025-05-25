@@ -18,8 +18,8 @@ const TeacherDashboard = React.lazy(() =>
 const ParentDashboard = React.lazy(() =>
 	import("../components/Dashboard/ParentDashboard")
 );
-const StudentDashboard = React.lazy(() =>
-	import("../components/Dashboard/StudentDashboard")
+const FinanceDashboard = React.lazy(() =>
+	import("../views/finance/FinanceDashboard")
 );
 const Streams = React.lazy(() => import("../views/students/Streams"));
 const Classes = React.lazy(() => import("../views/students/Classes"));
@@ -43,10 +43,10 @@ const parentRoutes = [
 		exact: true,
 	},
 	{
-		path: "/school",
+		path: "/finance",
 		exact: true,
-		name: "School Profile",
-		element: ParentDashboard,
+		name: "Finance",
+		element: FinanceDashboard,
 		
 	},
 	{

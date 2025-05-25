@@ -7,7 +7,7 @@ import { updateSchoolTeacher } from "../../store/schoolSlice"; // Implement this
 import { useNavigate } from "react-router-dom";
 
 const TeacherProfile = ({ isModal }) => {
-    const navigate = useNavigate()
+	const navigate = useNavigate();
 	const dispatch = useDispatch();
 	const selectedTeacher = useSelector(
 		(state) => state.school.selectedTeacher
@@ -30,12 +30,7 @@ const TeacherProfile = ({ isModal }) => {
 	const handleEditClick = () => setIsEditing(true);
 
 	const handleSaveClick = async () => {
-		const res = await dispatch(
-			updateSchoolTeacher({
-				teacherData: teacherData,
-				schoolId: schoolId,
-			})
-		);
+		const res = await dispatch(updateSchoolTeacher(teacherData));
 		if (res?.payload?.message) {
 			dispatch(
 				addToast({

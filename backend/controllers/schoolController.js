@@ -1,29 +1,38 @@
-const School = require("../models/School");
+const { School, Student, Teacher } = require("../models/newSchoolModel");
 const supabase = require("../supabaseClient");
 
 //Query School
 exports.querySchool = async (req, res) => {
 	const { schoolId } = req.params;
 	try {
-		const result = await School.aggregate([
-			{ $match: { schoolId: schoolId } },
-			{ $unwind: "$students" },
-			{ $project: { numStudents: { $size: "$students.students" } } },
-			{
-				// Sum all student counts across cohorts
-				$group: {
-					_id: null,
-					totalStudents: { $sum: "$numStudents" },
-				},
-			},
+		const school = await School.findOne({ schoolId: schoolId });
+
+		if (!school) {
+			return res.status(404).json({ message: "School not found" });
+		}
+		const schoolObjectId = school._id;
+		// Get total student count
+		const totalStudentsResult = await Student.aggregate([
+			{ $match: { schoolId: schoolObjectId } },
+			{ $count: "totalStudents" } // Use $count to get the count of matched documents
 		]);
 
-		const totalStudents = result[0]?.totalStudents || 0;
-		const school = await School.findOne({ schoolId });
+		// Get total teacher count
+		const totalTeachersResult = await Teacher.aggregate([
+			{ $match: { schoolId: schoolObjectId } },
+			{ $count: "totalTeachers" } // Use $count to get the count of matched documents
+		]);
 
-		const totalTeachers = school.teachers?.length || 0;
+		// Extract counts (default to 0 if no results)
+		const totalStudents = totalStudentsResult.length > 0 ? totalStudentsResult[0].totalStudents : 0;
+		const totalTeachers = totalTeachersResult.length > 0 ? totalTeachersResult[0].totalTeachers : 0;
 
-		res.status(200).json({ totalStudents: totalStudents, totalTeachers: totalTeachers });
+
+		res.status(200).json({
+			totalStudents: totalStudents,
+			totalTeachers: totalTeachers,
+			message: "School Query Successful"
+		});
 	} catch (error) {
 		console.error("Error updating student:", error);
 		res.status(500).json({
@@ -148,62 +157,106 @@ exports.uploadStudents = async (req, res) => {
 			console.log("school not found");
 			return res.status(404).json({ message: "School not found." });
 		}
+		const schoolObjectId = school._id;
 
-		// Basic validation (you might want more robust validation)
+		const newStudentsToInsert = [];
+		const duplicates = [];
+
+		// Fetch existing students by adm_no, birth_cert_no, kcpe_index_no for the current school
+		const existingStudents = await Student.find({
+			schoolId: schoolObjectId,
+			$or: [
+				{ adm_no: { $in: studentsData.map((s) => s.adm_no) } },
+				{
+					birth_cert_no: {
+						$in: studentsData.map((s) => s.birth_cert_no),
+					},
+				},
+				{
+					kcpe_index_no: {
+						$in: studentsData.map((s) => s.kcpe_index_no),
+					},
+				},
+			],
+		}).select("adm_no birth_cert_no kcpe_index_no");
+
+		const existingAdmNos = new Set(existingStudents.map((s) => s.adm_no));
+		const existingBirthCertNos = new Set(
+			existingStudents.map((s) => s.birth_cert_no)
+		);
+		const existingKcpeIndexNos = new Set(
+			existingStudents.map((s) => s.kcpe_index_no)
+		);
+
 		for (const student of studentsData) {
+			// Basic validation
 			if (
 				!student.adm_no ||
 				!student.birth_cert_no ||
-				!student.kcpe_index_no
+				!student.kcpe_index_no ||
+				!student.first_name ||
+				!student.surname
 			) {
-				return res.status(400).json({
-					message:
-						"Admission number, birth certificate number, and KCPE index number are required for all students.",
+				duplicates.push({
+					data: student,
+					reason: "Missing required fields (adm_no, birth_cert_no, kcpe_index_no, first_name, surname)",
 				});
+				continue; // Skip this student
 			}
-		}
 
-		// Find the cohort object in the students array
-		let cohortGroup = school.students.find(
-			(group) => group.cohort === cohort
-		);
-
-		if (!cohortGroup) {
-			// If the cohort doesn't exist, create a new cohort group
-			cohortGroup = { cohort, students: [] };
-			school.students.push(cohortGroup);
-		}
-		// Save the updated school document
-		await school.save();
-
-		// Check for duplicates before adding students
-		for (const student of studentsData) {
-			const isDuplicate = cohortGroup.students.some(
-				(existingStudent) =>
-					existingStudent.adm_no === student.adm_no ||
-					existingStudent.birth_cert_no === student.birth_cert_no ||
-					existingStudent.kcpe_index_no === student.kcpe_index_no
-			);
+			const isDuplicate =
+				existingAdmNos.has(student.adm_no) ||
+				existingBirthCertNos.has(student.birth_cert_no) ||
+				existingKcpeIndexNos.has(student.kcpe_index_no);
 
 			if (isDuplicate) {
-				return res.status(400).json({
-					message: `Duplicate student found: adm_no ${student.adm_no}, birth_cert_no ${student.birth_cert_no}, or kcpe_index_no ${student.kcpe_index_no}`,
+				duplicates.push({
+					data: student,
+					reason: `Duplicate found by adm_no (${student.adm_no}), birth_cert_no (${student.birth_cert_no}), or kcpe_index_no (${student.kcpe_index_no})`,
+				});
+			} else {
+				newStudentsToInsert.push({
+					...student,
+					schoolId: schoolObjectId,
 				});
 			}
 		}
 
-		// Add the new students to the selected cohort
-		cohortGroup.students.push(...studentsData);
-
-		// Save the updated school document
-		await school.save();
-
-		res.status(200).json({
-			message: `Successfully uploaded ${studentsData.length} student records.`,
-		});
+		if (newStudentsToInsert.length > 0) {
+			const insertedStudents = await Student.insertMany(
+				newStudentsToInsert,
+				{ ordered: false }
+			); // Insert many, continue on error
+			res.status(200).json({
+				message: `Successfully uploaded ${insertedStudents.length} new student records.`,
+				duplicates: duplicates,
+				uploadedCount: insertedStudents.length,
+				skippedCount: duplicates.length,
+			});
+		} else {
+			res.status(200).json({
+				message:
+					"No new students to upload. All provided records appear to be duplicates or invalid.",
+				duplicates: duplicates,
+				uploadedCount: 0,
+				skippedCount: duplicates.length,
+			});
+		}
 	} catch (error) {
 		console.error("Error uploading students:", error);
-		res.status(500).json({ message: "Failed to upload student data." });
+		// Handle potential duplicate key errors from insertMany if not using the pre-check
+		if (error.code === 11000) {
+			// Duplicate key error
+			return res.status(400).json({
+				message:
+					"One or more students could not be uploaded due to duplicate unique fields (e.g., adm_no, birth_cert_no, kcpe_index_no).",
+				error: error.message,
+			});
+		}
+		res.status(500).json({
+			message: "Failed to upload student data.",
+			error: error.message,
+		});
 	}
 };
 
@@ -221,102 +274,111 @@ exports.uploadTeachers = async (req, res) => {
 				.json({ message: "No teacher data to upload." });
 		}
 
-		const school = await School.findOne({ schoolId: schoolId });
-		if (!school) {
-			return res.status(404).json({ message: "School not found." });
+		const schoolExists = await School.findOne({ schoolId: schoolId });
+		if (!schoolExists) {
+			return res
+				.status(404)
+				.json({ message: "Associated school not found." });
 		}
+		const schoolObjectId = schoolExists._id;
 
-		const existingEmployeeNumbers = school.teachers.map(
-			(teacher) => teacher.employee_number
-		);
-		const existingNationalIds = school.teachers.map(
-			(teacher) => teacher.national_id
-		);
-
-		const newTeachers = [];
+		const newTeachersToInsert = [];
 		const duplicates = [];
 
-		// Basic validation for required fields
+		// Fetch existing teachers for the current school
+		const existingTeachers = await Teacher.find({
+			schoolId: schoolObjectId,
+			$or: [
+				{
+					employee_number: {
+						$in: teachersData.map((t) => t.employee_number),
+					},
+				},
+				{
+					national_id: {
+						$in: teachersData.map((t) => t.national_id),
+					},
+				},
+			],
+		}).select("employee_number national_id");
+
+		const existingEmployeeNumbers = new Set(
+			existingTeachers.map((t) => t.employee_number)
+		);
+		const existingNationalIds = new Set(
+			existingTeachers.map((t) => t.national_id)
+		);
+
 		for (const teacher of teachersData) {
-			if (!teacher.employee_number) {
-				return res.status(400).json({
-					message: "Employee number is required for all teachers.",
-				});
-			}
-			if (!teacher.kra_pin) {
-				return res
-					.status(400)
-					.json({ message: "KRA PIN is required for all teachers." });
-			}
-			if (!teacher.national_id) {
-				return res.status(400).json({
-					message: "National ID is required for all teachers.",
-				});
-			}
-			if (!teacher.first_name) {
-				return res.status(400).json({
-					message: "First name is required for all teachers.",
-				});
-			}
-			if (!teacher.middle_name) {
-				return res.status(400).json({
-					message: "Middle name is required for all teachers.",
-				});
-			}
-			if (!teacher.surname) {
-				return res
-					.status(400)
-					.json({ message: "Surname is required for all teachers." });
-			}
+			// Basic validation
 			if (
+				!teacher.employee_number ||
+				!teacher.kra_pin ||
+				!teacher.national_id ||
+				!teacher.first_name ||
+				!teacher.surname ||
 				!teacher.subjects_taught ||
 				!Array.isArray(teacher.subjects_taught) ||
 				teacher.subjects_taught.length === 0
 			) {
-				return res.status(400).json({
-					message:
-						"At least one subject taught is required for all teachers.",
+				duplicates.push({
+					data: teacher,
+					reason: "Missing required fields (employee_number, kra_pin, national_id, first_name, surname, subjects_taught)",
 				});
+				continue;
 			}
 
-			const isDuplicateEmployeeNumber = existingEmployeeNumbers.includes(
-				teacher.employee_number
-			);
-			const isDuplicateNationalId =
-				teacher.national_id &&
-				existingNationalIds.includes(teacher.national_id);
+			const isDuplicate =
+				existingEmployeeNumbers.has(teacher.employee_number) ||
+				existingNationalIds.has(teacher.national_id);
 
-			if (isDuplicateEmployeeNumber || isDuplicateNationalId) {
+			if (isDuplicate) {
 				duplicates.push({
-					employee_number: teacher.employee_number,
-					national_id: teacher.national_id,
-					reason: isDuplicateEmployeeNumber
-						? isDuplicateNationalId
-							? "Employee number and National ID already exist"
-							: "Employee number already exists"
-						: "National ID already exists",
+					data: teacher,
+					reason: `Duplicate found by employee number (${teacher.employee_number}) or National ID (${teacher.national_id})`,
 				});
 			} else {
-				newTeachers.push(teacher);
+				newTeachersToInsert.push({
+					...teacher,
+					schoolId: schoolObjectId, // Crucially link to the school
+				});
 			}
 		}
-		if (newTeachers.length > 0) {
-			school.teachers.push(...newTeachers);
-			await school.save();
-			const uploadCount = newTeachers.length;
-			const duplicateCount = duplicates.length;
-			const message = `Successfully uploaded ${uploadCount} new teacher(s). ${duplicateCount} duplicate record(s) were skipped.`;
-			return res.status(200).json({ message, duplicates });
+
+		if (newTeachersToInsert.length > 0) {
+			const insertedTeachers = await Teacher.insertMany(
+				newTeachersToInsert,
+				{ ordered: false }
+			);
+			res.status(200).json({
+				message: `Successfully uploaded ${insertedTeachers.length} new teacher(s).`,
+				duplicates: duplicates,
+				uploadedCount: insertedTeachers.length,
+				skippedCount: duplicates.length,
+			});
 		} else {
-			return res.status(200).json({
+			res.status(200).json({
 				message:
-					"No new teachers to upload. All provided records appear to be duplicates.",
-				duplicates,
+					"No new teachers to upload. All provided records appear to be duplicates or invalid.",
+				duplicates: duplicates,
+				uploadedCount: 0,
+				skippedCount: duplicates.length,
 			});
 		}
 	} catch (error) {
 		console.error("Error uploading teachers:", error);
-		res.status(500).json({ message: "Failed to upload teacher data." });
+		if (error.code === 11000) {
+			// Duplicate key error
+			return res.status(400).json({
+				message:
+					"One or more teachers could not be uploaded due to duplicate unique fields (e.g., employee_number, national_id).",
+				error: error.message,
+			});
+		}
+		res.status(500).json({
+			message: "Failed to upload teacher data.",
+			error: error.message,
+		});
 	}
 };
 
@@ -328,7 +390,11 @@ exports.getSchoolStudents = async (req, res) => {
 		if (!school) {
 			return res.status(404).json({ message: "School not found." });
 		}
-		const students = school?.students;
+		const schoolObjectId = school._id;
+		const students = await Student.find({ schoolId: schoolObjectId }).sort({
+			cohort: 1,
+			adm_no: 1,
+		});
 
 		res.status(200).json({ students: students });
 	} catch (error) {
@@ -347,12 +413,13 @@ exports.getSchoolTeachers = async (req, res) => {
 		if (!school)
 			return res.status(404).json({ message: "School not found" });
 
-		const teachers = school?.teachers;
+		const schoolObjectId = school._id;
+		const teachers = await Teacher.find({ schoolId: schoolObjectId });
 
 		res.status(200).json({ teachers: teachers });
 	} catch (error) {
 		console.error(error);
-		return res.status(500).json({ message: "Server error" });
+		return res.status(500).json({ message: `Server error: ${error}` });
 	}
 };
 
@@ -360,28 +427,26 @@ exports.updateStudent = async (req, res) => {
 	try {
 		const { studentId } = req.params;
 		const updatedData = req.body;
+		const schoolObjectId = updatedData.schoolId;
 
-		// Find the school and the specific student within its cohorts
-		const school = await School.findOne({
-			"students.students.adm_no": studentId,
-		});
-		if (!school) {
-			return res
-				.status(404)
-				.json({ message: `Student ${studentId} not found.` });
+		if (!schoolObjectId) {
+			return res.status(400).json({
+				message: "School ID (from authenticated user) is required.",
+			});
 		}
 
-		// Find the specific student sub-document and update its properties
-		let updatedStudent;
-		school.students.forEach((cohort) => {
-			const student = cohort.students.find((s) => s.adm_no === studentId);
-			if (student) {
-				Object.assign(student, updatedData);
-				updatedStudent = student;
-			}
-		});
+		// Find the student by _id AND ensure they belong to the authenticated school
+		const updatedStudent = await Student.findOneAndUpdate(
+			{ _id: studentId, schoolId: schoolObjectId }, // Find by student's _id and schoolId
+			{ $set: updatedData }, // Apply updates using $set
+			{ new: true, runValidators: true } // Return the updated document and run schema validators
+		);
 
-		await school.save(); // Save the changes to the school document
+		if (!updatedStudent) {
+			return res.status(404).json({
+				message: `Student with ID ${studentId} not found in this school.`,
+			});
+		}
 
 		res.status(200).json({
 			updatedStudent: updatedStudent,
@@ -389,6 +454,20 @@ exports.updateStudent = async (req, res) => {
 		});
 	} catch (error) {
 		console.error("Error updating student:", error);
+		// Handle specific validation errors if runValidators is true
+		if (error.name === "ValidationError") {
+			return res
+				.status(400)
+				.json({ message: error.message, errors: error.errors });
+		}
+		// Handle unique constraint errors (e.g., if trying to change adm_no to an existing one)
+		if (error.code === 11000) {
+			return res.status(400).json({
+				message:
+					"A student with this unique identifier already exists.",
+				error: error.message,
+			});
+		}
 		res.status(500).json({
 			message: "Failed to update student.",
 			error: error.message,
@@ -397,37 +476,116 @@ exports.updateStudent = async (req, res) => {
 };
 
 exports.updateTeacher = async (req, res) => {
-	const { schoolId } = req.params;
-	const updatedData = req.body.teacherData;
+	const { teacherId } = req.params;
+	const updatedData = req.body;
+	const schoolObjectId = updatedData.schoolId;
 
 	try {
-		const school = await School.findOne({ schoolId });
-
-		if (!school) {
-			return res.status(404).json({ message: "School not found" });
-		}
-		// Find and update the teacher
-		let updatedTeacher;
-		school.teachers.forEach((teacher) => {
-			if (teacher.national_id == updatedData.national_id) {
-				Object.assign(teacher, updatedData);
-				updatedTeacher = teacher;
-			}
-		});
-		if (updatedTeacher) {
-			await school.save(); // Persist changes
-
-			res.status(200).json({
-				updatedTeacher: updatedTeacher,
-				message: "Teacher Details Updated Successfully",
+		if (!schoolObjectId) {
+			return res.status(400).json({
+				message: "School ID (from authenticated user) is required.",
 			});
-		} else {
-			return res.status(404).json({ message: "Teacher not found" });
 		}
-	} catch (err) {
-		console.error(err);
+
+		// Find the teacher by _id AND ensure they belong to the authenticated school
+		const updatedTeacher = await Teacher.findOneAndUpdate(
+			{ _id: teacherId, schoolId: schoolObjectId },
+			{ $set: updatedData },
+			{ new: true, runValidators: true }
+		);
+
+		if (!updatedTeacher) {
+			return res.status(404).json({
+				message: `Teacher with ID ${teacherId} not found in this school.`,
+			});
+		}
+
+		res.status(200).json({
+			updatedTeacher: updatedTeacher,
+			message: "Teacher Details Updated Successfully",
+		});
+	} catch (error) {
+		console.error("Error updating teacher:", error);
+		if (error.name === "ValidationError") {
+			return res
+				.status(400)
+				.json({ message: error.message, errors: error.errors });
+		}
+		if (error.code === 11000) {
+			return res.status(400).json({
+				message:
+					"A teacher with this unique identifier (employee_number or national_id) already exists.",
+				error: error.message,
+			});
+		}
 		res.status(500).json({
-			message: "Server error while updating teacher",
+			message: "Failed to update teacher.",
+			error: error.message,
 		});
 	}
+};
+
+// New function to link a user (teacher, finance, student, parent) to a school
+exports.linkUserToSchool = async (req, res) => {
+    try {
+        const { email, role, isVerified } = req.body;
+        const schoolId = req.user.schoolId; // Comes from requireAdmin middleware, which extracts from JWT
+
+        if (!email || !role) {
+            return res.status(400).json({ message: 'Email and Role are required.' });
+        }
+
+        // Basic validation for role
+        const allowedRoles = ['teacher', 'finance', 'student', 'parent', 'admin'];
+        if (!allowedRoles.includes(role)) {
+            return res.status(400).json({ message: `Invalid role: ${role}. Allowed roles are: ${allowedRoles.join(', ')}.` });
+        }
+
+        // 1. Find the user in Supabase by email
+        // Note: Supabase's auth.users table is typically what you'd manage with the admin client.
+        // If you have a separate `public.users` table, you query that.
+        // Assuming your `public.users` table holds `email`, `role`, `schoolId`, `isVerified`
+        const { data: user, error: findError } = await supabase
+            .from('users') // Your Supabase table name where user roles and schoolId are stored
+            .select('id, email') // Select only what's needed for identification
+            .eq('email', email)
+            .single();
+
+        if (findError) {
+            console.error("Supabase user find error:", findError);
+            if (findError.code === 'PGRST116') { // No rows found (specific to PostgREST for single())
+                return res.status(404).json({ message: `User with email ${email} not found in Supabase.` });
+            }
+            return res.status(500).json({ message: `Error finding user in Supabase: ${findError.message}` });
+        }
+
+        if (!user) {
+            return res.status(404).json({ message: `User with email ${email} not found.` });
+        }
+
+        // 2. Update the user's record in Supabase
+        const { data: updatedUser, error: updateError } = await supabase
+            .from('users') // Same table
+            .update({
+                role: role,
+                schoolId: schoolId.toString(), // Store MongoDB ObjectId as a string in Supabase
+                isVerified: !!isVerified, // Ensure it's a boolean
+            })
+            .eq('id', user.id) // Update by Supabase user ID
+            .select(); // Return the updated record
+
+        if (updateError) {
+            console.error("Supabase user update error:", updateError);
+            return res.status(500).json({ message: `Failed to update user in Supabase: ${updateError.message}` });
+        }
+
+        res.status(200).json({
+            message: `User ${email} successfully linked to school with role ${role}.`,
+            user: updatedUser[0], // Supabase update returns an array for select()
+        });
+
+    } catch (error) {
+        console.error("Error linking user to school:", error);
+        res.status(500).json({ message: "Server error linking user to school.", error: error.message });
+    }
 };

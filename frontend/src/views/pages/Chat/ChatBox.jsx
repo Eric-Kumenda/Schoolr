@@ -344,7 +344,7 @@ const ChatBox = ({ convoId, socket, isOnline }) => {
 							<div
 								className={`p-2 px-3 rounded-4 ${
 									msg.sender === userId
-										? "bg-primary-subtle"
+										? "bg-body-secondary"
 										: "bg-body-tertiary"
 								}`}>
 								{msg.message}

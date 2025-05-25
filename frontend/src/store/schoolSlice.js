@@ -18,6 +18,20 @@ const initialState = {
 	teachersData: [],
 	fetchSchoolTeachersLoading: false,
 	fetchSchoolTeachersError: null,
+
+	exams: [], // To store list of exams
+	selectedExam: null, // To store details of a selected exam
+	studentsForResultsEntry: [], // Students for results input
+	studentExamResults: [], // Results for a single student
+	examOverviewResults: [], // All results for a specific exam
+	examsLoading: "idle",
+	examsError: null,
+
+	studentsForAttendance: [], // Students list for attendance taking
+	monthlyAttendanceSummary: [], // Data for admin dashboard chart
+	studentAttendanceSummary: null, // Summary for a single student
+	attendanceLoading: "idle",
+	attendanceError: null,
 };
 
 export const fetchSchoolMetrics = createAsyncThunk(
@@ -155,7 +169,7 @@ export const updateSchoolStudent = createAsyncThunk(
 	async (studentData, { rejectWithValue }) => {
 		try {
 			const response = await axios.put(
-				`/school/students/update/${studentData.adm_no}`,
+				`/school/students/update/${studentData._id}`,
 				studentData,
 				{
 					withCredentials: true,
@@ -172,11 +186,11 @@ export const updateSchoolStudent = createAsyncThunk(
 
 export const updateSchoolTeacher = createAsyncThunk(
 	"school/updateTeacher",
-	async ({ teacherData, schoolId }, { rejectWithValue }) => {
+	async (teacherData, { rejectWithValue }) => {
 		try {
 			const response = await axios.put(
-				`/school/teachers/update/${schoolId}`,
-				{ teacherData },
+				`/school/teachers/update/${teacherData._id}`,
+				teacherData,
 				{
 					withCredentials: true,
 				}
@@ -185,6 +199,216 @@ export const updateSchoolTeacher = createAsyncThunk(
 		} catch (err) {
 			return rejectWithValue(
 				err.response?.data?.msg || "Failed to update teacher."
+			);
+		}
+	}
+);
+
+// --- New Thunks for Exam Module ---
+
+// Admin: Create New Exam
+export const createExam = createAsyncThunk(
+	"exams/createExam",
+	async (examData, { rejectWithValue }) => {
+		try {
+			const response = await axios.post("/exams/create", examData);
+			return response.data; // Expecting { message, exam }
+		} catch (error) {
+			return rejectWithValue(
+				error.response?.data?.message || "Failed to create exam."
+			);
+		}
+	}
+);
+
+// Admin/Teacher: Get list of all Exams for a school
+export const getExams = createAsyncThunk(
+	"exams/getExams",
+	async (_, { rejectWithValue }) => {
+		try {
+			const response = await axios.get("/exams/list");
+			return response.data; // Expecting { exams: [] }
+		} catch (error) {
+			return rejectWithValue(
+				error.response?.data?.message || "Failed to fetch exams list."
+			);
+		}
+	}
+);
+
+// Admin/Teacher: Get Students and their existing results for a specific exam
+export const getStudentsForResultsEntry = createAsyncThunk(
+	"exams/getStudentsForResultsEntry",
+	async ({ examId, cohort, stream }, { rejectWithValue }) => {
+		try {
+			// Build query parameters
+			const params = new URLSearchParams();
+			if (cohort) params.append("cohort", cohort);
+			if (stream) params.append("stream", stream);
+
+			const response = await axios.get(
+				`/exams/${examId}/students-for-entry`,
+				{ params }
+			);
+			return response.data; // Expecting { students: [] }
+		} catch (error) {
+			return rejectWithValue(
+				error.response?.data?.message ||
+					"Failed to fetch students for results entry."
+			);
+		}
+	}
+);
+
+// Admin/Teacher: Update a single student's result for a subject in a specific exam
+export const updateStudentResult = createAsyncThunk(
+	"exams/updateStudentResult",
+	async ({ examId, studentId, resultData }, { rejectWithValue }) => {
+		try {
+			const response = await axios.put(
+				`/exams/${examId}/students/${studentId}/results`,
+				resultData
+			);
+			return response.data; // Expecting { message, result }
+		} catch (error) {
+			return rejectWithValue(
+				error.response?.data?.message ||
+					"Failed to update student result."
+			);
+		}
+	}
+);
+
+// Admin: Set Exam Status to Official
+export const setExamOfficial = createAsyncThunk(
+	"exams/setExamOfficial",
+	async (examId, { rejectWithValue }) => {
+		try {
+			const response = await axios.put(`/exams/${examId}/official`);
+			return response.data; // Expecting { message, exam }
+		} catch (error) {
+			return rejectWithValue(
+				error.response?.data?.message || "Failed to set exam official."
+			);
+		}
+	}
+);
+
+// All Authorized Roles: Get a specific student's exam results
+export const getStudentExamResults = createAsyncThunk(
+	"exams/getStudentExamResults",
+	async ({ studentId, examId }, { rejectWithValue }) => {
+		// examId is optional
+		try {
+			const params = new URLSearchParams();
+			if (examId) params.append("examId", examId);
+
+			const response = await axios.get(
+				`/students/${studentId}/exam-results`,
+				{ params }
+			);
+			return response.data; // Expecting { studentResults: [] }
+		} catch (error) {
+			return rejectWithValue(
+				error.response?.data?.message ||
+					"Failed to fetch student exam results."
+			);
+		}
+	}
+);
+
+// Admin/Teacher: Get all results for a specific exam (for overview/reporting)
+export const getExamResultsByExamId = createAsyncThunk(
+	"exams/getExamResultsByExamId",
+	async (examId, { rejectWithValue }) => {
+		try {
+			const response = await axios.get(`/exams/${examId}/all-results`);
+			return response.data; // Expecting { exam, results: [] }
+		} catch (error) {
+			return rejectWithValue(
+				error.response?.data?.message ||
+					"Failed to fetch exam overview results."
+			);
+		}
+	}
+);
+
+// --- ATTENDANCE ---
+// Teacher/Admin: Get Students for Attendance Taking
+export const getStudentsForAttendance = createAsyncThunk(
+	"attendance/getStudentsForAttendance",
+	async ({ attendanceDate, cohort, stream }, { rejectWithValue }) => {
+		try {
+			const params = new URLSearchParams({ attendanceDate });
+			if (cohort) params.append("cohort", cohort);
+			if (stream) params.append("stream", stream);
+
+			const response = await axios.get(
+				"/attendance/students-for-entry",
+				{ params }
+			);
+			return response.data; // Expecting { students: [] }
+		} catch (error) {
+			return rejectWithValue(
+				error.response?.data?.message ||
+					"Failed to fetch students for attendance."
+			);
+		}
+	}
+);
+
+// Teacher/Admin: Record/Update Batch Attendance
+export const recordBatchAttendance = createAsyncThunk(
+	"attendance/recordBatchAttendance",
+	async ({ attendanceDate, attendanceData }, { rejectWithValue }) => {
+		try {
+			const response = await axios.post("/attendance/batch", {
+				attendanceDate,
+				attendanceData,
+			});
+			return response.data; // Expecting { message, bulkWriteResult, updatedStudentSummaries }
+		} catch (error) {
+			return rejectWithValue(
+				error.response?.data?.message ||
+					"Failed to record batch attendance."
+			);
+		}
+	}
+);
+
+// Admin: Get Monthly Attendance Summary for Chart
+export const getMonthlyAttendanceSummary = createAsyncThunk(
+	"attendance/getMonthlyAttendanceSummary",
+	async ({ year, month }, { rejectWithValue }) => {
+		try {
+			const params = new URLSearchParams({ year, month });
+			const response = await axios.get(
+				"/attendance/monthly-summary",
+				{ params }
+			);
+			return response.data; // Expecting { summary: [] }
+		} catch (error) {
+			return rejectWithValue(
+				error.response?.data?.message ||
+					"Failed to fetch monthly attendance summary."
+			);
+		}
+	}
+);
+
+// All Authorized Roles: Get a specific student's attendance summary
+export const getStudentAttendanceSummary = createAsyncThunk(
+	"attendance/getStudentAttendanceSummary",
+	async (studentId, { rejectWithValue }) => {
+		try {
+			const response = await axios.get(
+				`/students/${studentId}/attendance-summary`
+			);
+			return response.data; // Expecting { studentId, adm_no, name, summary }
+		} catch (error) {
+			return rejectWithValue(
+				error.response?.data?.message ||
+					"Failed to fetch student attendance summary."
 			);
 		}
 	}
@@ -199,6 +423,27 @@ const schoolSlice = createSlice({
 		},
 		setSelectedTeacher: (state, action) => {
 			state.selectedTeacher = action.payload;
+		},
+		clearExamState: (state) => {
+			// Utility to clear exam-related data
+			state.exams = [];
+			state.selectedExam = null;
+			state.studentsForResultsEntry = [];
+			state.studentExamResults = [];
+			state.examOverviewResults = [];
+			state.examsLoading = "idle";
+			state.examsError = null;
+		},
+		clearSelectedExamData: (state) => {
+			state.studentsForResultsEntry = [];
+			state.examOverviewResults = [];
+		},
+		clearAttendanceState: (state) => {
+			state.studentsForAttendance = [];
+			state.monthlyAttendanceSummary = [];
+			state.studentAttendanceSummary = null;
+			state.attendanceLoading = "idle";
+			state.attendanceError = null;
 		},
 	},
 	extraReducers: (builder) => {
@@ -267,18 +512,14 @@ const schoolSlice = createSlice({
 			})
 			.addCase(updateSchoolStudent.fulfilled, (state, action) => {
 				//state.loading = 'succeeded';
-				// Optionally, update the studentsData in the store if needed
-				// You might want to find and replace the updated student in your local array
 				const updatedStudent = action.payload.updatedStudent;
 				if (state.studentsData) {
-					state.studentsData = state.studentsData.map((cohort) => ({
-						...cohort,
-						students: cohort.students.map((student) =>
-							student._id === updatedStudent._id
-								? updatedStudent
-								: student
-						),
-					}));
+					// Directly map over the flattened studentsData array
+					state.studentsData = state.studentsData.map((student) =>
+						student._id === updatedStudent._id
+							? updatedStudent
+							: student
+					);
 				}
 				state.selectedStudent = updatedStudent; // Update the selected student in the store
 			})
@@ -312,9 +553,217 @@ const schoolSlice = createSlice({
 			.addCase(fetchSchoolMetrics.rejected, (state, action) => {
 				state.fetchSchoolMetricsLoading = false;
 				state.fetchSchoolMetricsError = action.payload;
+			})
+			// createExam
+			.addCase(createExam.pending, (state) => {
+				state.examsLoading = "pending";
+				state.examsError = null;
+			})
+			.addCase(createExam.fulfilled, (state, action) => {
+				state.examsLoading = "succeeded";
+				state.exams.push(action.payload.exam); // Add new exam to list
+			})
+			.addCase(createExam.rejected, (state, action) => {
+				state.examsLoading = "failed";
+				state.examsError = action.payload;
+			})
+
+			// getExams
+			.addCase(getExams.pending, (state) => {
+				state.examsLoading = "pending";
+				state.examsError = null;
+			})
+			.addCase(getExams.fulfilled, (state, action) => {
+				state.examsLoading = "succeeded";
+				state.exams = action.payload.exams;
+			})
+			.addCase(getExams.rejected, (state, action) => {
+				state.examsLoading = "failed";
+				state.examsError = action.payload;
+			})
+
+			// getStudentsForResultsEntry
+			.addCase(getStudentsForResultsEntry.pending, (state) => {
+				state.examsLoading = "pending";
+				state.examsError = null;
+			})
+			.addCase(getStudentsForResultsEntry.fulfilled, (state, action) => {
+				state.examsLoading = "succeeded";
+				state.studentsForResultsEntry = action.payload.students;
+			})
+			.addCase(getStudentsForResultsEntry.rejected, (state, action) => {
+				state.examsLoading = "failed";
+				state.examsError = action.payload;
+			})
+
+			// updateStudentResult
+			.addCase(updateStudentResult.pending, (state) => {
+				state.examsLoading = "pending";
+				state.examsError = null;
+			})
+			.addCase(updateStudentResult.fulfilled, (state, action) => {
+				state.examsLoading = "succeeded";
+				// Optimistically update the student's result in studentsForResultsEntry
+				const { studentId, subject } = action.meta.arg; // Get studentId and subject from original action payload
+				const updatedResult = action.payload.result;
+
+				const studentIndex = state.studentsForResultsEntry.findIndex(
+					(s) => s._id === studentId
+				);
+				if (studentIndex !== -1) {
+					const resultsIndex = state.studentsForResultsEntry[
+						studentIndex
+					].results.findIndex((r) => r.subject === subject);
+					if (resultsIndex !== -1) {
+						state.studentsForResultsEntry[studentIndex].results[
+							resultsIndex
+						] = updatedResult;
+					} else {
+						state.studentsForResultsEntry[
+							studentIndex
+						].results.push(updatedResult);
+					}
+				}
+			})
+			.addCase(updateStudentResult.rejected, (state, action) => {
+				state.examsLoading = "failed";
+				state.examsError = action.payload;
+			})
+
+			// setExamOfficial
+			.addCase(setExamOfficial.pending, (state) => {
+				state.examsLoading = "pending";
+				state.examsError = null;
+			})
+			.addCase(setExamOfficial.fulfilled, (state, action) => {
+				state.examsLoading = "succeeded";
+				// Update the status of the exam in the exams list
+				const examIndex = state.exams.findIndex(
+					(exam) => exam._id === action.payload.exam._id
+				);
+				if (examIndex !== -1) {
+					state.exams[examIndex].status = "official";
+					state.exams[examIndex].publishedAt =
+						action.payload.exam.publishedAt;
+					state.exams[examIndex].publishedBy =
+						action.payload.exam.publishedBy;
+				}
+				state.selectedExam = action.payload.exam; // If a specific exam was selected
+			})
+			.addCase(setExamOfficial.rejected, (state, action) => {
+				state.examsLoading = "failed";
+				state.examsError = action.payload;
+			})
+
+			// getStudentExamResults
+			.addCase(getStudentExamResults.pending, (state) => {
+				state.examsLoading = "pending";
+				state.examsError = null;
+			})
+			.addCase(getStudentExamResults.fulfilled, (state, action) => {
+				state.examsLoading = "succeeded";
+				state.studentExamResults = action.payload.studentResults;
+			})
+			.addCase(getStudentExamResults.rejected, (state, action) => {
+				state.examsLoading = "failed";
+				state.examsError = action.payload;
+			})
+
+			// getExamResultsByExamId
+			.addCase(getExamResultsByExamId.pending, (state) => {
+				state.examsLoading = "pending";
+				state.examsError = null;
+			})
+			.addCase(getExamResultsByExamId.fulfilled, (state, action) => {
+				state.examsLoading = "succeeded";
+				state.selectedExam = action.payload.exam; // Store the exam details
+				state.examOverviewResults = action.payload.results; // Store all results for that exam
+			})
+			.addCase(getExamResultsByExamId.rejected, (state, action) => {
+				state.examsLoading = "failed";
+				state.examsError = action.payload;
 			});
+
+		// getStudentsForAttendance
+		builder.addCase(getStudentsForAttendance.pending, (state) => {
+			state.attendanceLoading = "pending";
+			state.attendanceError = null;
+		});
+		builder.addCase(getStudentsForAttendance.fulfilled, (state, action) => {
+			state.attendanceLoading = "succeeded";
+			state.studentsForAttendance = action.payload.students;
+		});
+		builder.addCase(getStudentsForAttendance.rejected, (state, action) => {
+			state.attendanceLoading = "failed";
+			state.attendanceError = action.payload;
+		});
+
+		// recordBatchAttendance
+		builder.addCase(recordBatchAttendance.pending, (state) => {
+			state.attendanceLoading = "pending";
+			state.attendanceError = null;
+		});
+		builder.addCase(recordBatchAttendance.fulfilled, (state, action) => {
+			state.attendanceLoading = "succeeded";
+			// You might want to clear studentsForAttendance or update student summaries here
+			// For now, we'll just show success and let the user refetch if they change date
+			console.log(
+				"Batch attendance recorded successfully:",
+				action.payload.message
+			);
+		});
+		builder.addCase(recordBatchAttendance.rejected, (state, action) => {
+			state.attendanceLoading = "failed";
+			state.attendanceError = action.payload;
+		});
+
+		// getMonthlyAttendanceSummary
+		builder.addCase(getMonthlyAttendanceSummary.pending, (state) => {
+			state.attendanceLoading = "pending";
+			state.attendanceError = null;
+		});
+		builder.addCase(
+			getMonthlyAttendanceSummary.fulfilled,
+			(state, action) => {
+				state.attendanceLoading = "succeeded";
+				state.monthlyAttendanceSummary = action.payload.summary;
+			}
+		);
+		builder.addCase(
+			getMonthlyAttendanceSummary.rejected,
+			(state, action) => {
+				state.attendanceLoading = "failed";
+				state.attendanceError = action.payload;
+			}
+		);
+
+		// getStudentAttendanceSummary
+		builder.addCase(getStudentAttendanceSummary.pending, (state) => {
+			state.attendanceLoading = "pending";
+			state.attendanceError = null;
+		});
+		builder.addCase(
+			getStudentAttendanceSummary.fulfilled,
+			(state, action) => {
+				state.attendanceLoading = "succeeded";
+				state.studentAttendanceSummary = action.payload;
+			}
+		);
+		builder.addCase(
+			getStudentAttendanceSummary.rejected,
+			(state, action) => {
+				state.attendanceLoading = "failed";
+				state.attendanceError = action.payload;
+			}
+		);
 	},
 });
 
-export const { setSelectedStudent, setSelectedTeacher } = schoolSlice.actions;
+export const {
+	setSelectedStudent,
+	setSelectedTeacher,
+	clearExamState,
+	clearSelectedExamData,
+	clearAttendanceState
+} = schoolSlice.actions;
 export default schoolSlice.reducer;

@@ -35,9 +35,9 @@ const studentRoutes = [
 		element: JoinSchool,
 	},
 	{
-		path: "/students",
+		path: "/settings",
 		exact: true,
-		name: "Students",
+		name: "Settings",
 		element: Streams,
 		
 	},

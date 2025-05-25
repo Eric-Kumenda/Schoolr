@@ -4,6 +4,7 @@ import authReducer from "./authSlice";
 import schoolReducer from "./schoolSlice";
 import chatReducer from "./chatSlice";
 import toastReducer from "./toastSlice";
+import financeReducer from './financeSlice'
 
 const store = configureStore({
 	reducer: {
@@ -12,6 +13,7 @@ const store = configureStore({
 		school: schoolReducer,
 		chat: chatReducer,
 		toast: toastReducer,
+		finance: financeReducer,
 	},
 });
 

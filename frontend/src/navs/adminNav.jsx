@@ -10,7 +10,7 @@ const adminNav = [
 			{
 				component: CNavItem,
 				name: "Summary",
-				to: "/admin/dashboard",
+				to: "/admin",
 			},
 		],
 	},
@@ -138,6 +138,11 @@ const adminNav = [
 				name: "Current Student",
 				to: "/admission/current",
 			},
+			{
+				component: CNavItem,
+				name: "Link Account",
+				to: "/admin/link-user",
+			},
 		],
 	},
 	{
@@ -169,28 +174,18 @@ const adminNav = [
 	},
 	{
 		component: CNavGroup,
-		name: "Boarding",
-		icon: <i className="fa-regular fa-building-user nav-icon"></i>,
+		name: "Exams",
+		icon: <i className="fa-regular fa-clipboard-list nav-icon"></i>,
 		items: [
 			{
 				component: CNavItem,
-				name: "Houses",
-				to: "/boarding/houses",
+				name: "Create Exam",
+				to: "/admin/exams/create",
 			},
 			{
 				component: CNavItem,
-				name: "Dorms",
-				to: "/boarding/dorms",
-			},
-			{
-				component: CNavItem,
-				name: "Patrons",
-				to: "/boarding/patrons",
-			},
-			{
-				component: CNavItem,
-				name: "Prefects",
-				to: "/boarding/prefects",
+				name: "Manage Exams",
+				to: "/admin/exams",
 			},
 		],
 	},
@@ -198,14 +193,8 @@ const adminNav = [
 	{
 		component: CNavItem,
 		name: "Settings",
-		to: "/settings",
+		to: "/admin/settings",
 		icon: <i className="fa-regular fa-gear nav-icon"></i>,
-	},
-	{
-		component: CNavItem,
-		name: "Login",
-		to: '/loginStudent',
-		icon: <i className="fa-regular fa-user-unlock nav-icon"></i>,
 	},
 ];
 

@@ -16,6 +16,9 @@ const initialState = {
 	loading: false,
 	error: null,
 	isReady: false,
+
+	userLinkingLoading: "idle",
+	userLinkingError: null,
 };
 
 export const loginUser = createAsyncThunk(
@@ -81,6 +84,24 @@ export const googleLoginUser = createAsyncThunk(
 	}
 );
 
+export const linkUserToSchool = createAsyncThunk(
+	"admin/linkUserToSchool",
+	async ({ email, role, isVerified }, { rejectWithValue }) => {
+		try {
+			const response = await axios.post(
+				"/school/admin/link-user-to-school",
+				{ email, role, isVerified }
+			);
+			return response.data; // Expecting { message, user }
+		} catch (error) {
+			return rejectWithValue(
+				error.response?.data?.message ||
+					"Failed to link user to school."
+			);
+		}
+	}
+);
+
 const authSlice = createSlice({
 	name: "auth",
 	initialState,
@@ -107,6 +128,10 @@ const authSlice = createSlice({
 		},
 		setToken: (state, action) => {
 			state.token = action.payload;
+		},
+		clearUserLinkingState: (state) => {
+			state.userLinkingLoading = "idle";
+			state.userLinkingError = null;
 		},
 	},
 	extraReducers: (builder) => {
@@ -178,9 +203,24 @@ const authSlice = createSlice({
 				state.role = null;
 				localStorage.removeItem("token");
 				state.isReady = true;
+			})
+
+			// linkUserToSchool
+			.addCase(linkUserToSchool.pending, (state) => {
+				state.userLinkingLoading = "pending";
+				state.userLinkingError = null;
+			})
+			.addCase(linkUserToSchool.fulfilled, (state, action) => {
+				state.userLinkingLoading = "succeeded";
+				// Optionally store the updated user info if needed, or just show success message
+				// console.log('User linked:', action.payload.user);
+			})
+			.addCase(linkUserToSchool.rejected, (state, action) => {
+				state.userLinkingLoading = "failed";
+				state.userLinkingError = action.payload;
 			});
 	},
 });
 
-export const { logout, setUser, setToken } = authSlice.actions;
+export const { logout, setUser, setToken, clearUserLinkingState } = authSlice.actions;
 export default authSlice.reducer;

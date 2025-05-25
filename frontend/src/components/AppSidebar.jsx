@@ -17,6 +17,7 @@ import adminNav from "../navs/adminNav";
 import teacherNav from "../navs/teacherNav";
 import studentNav from "../navs/studentNav";
 import parentNav from "../navs/parentNav";
+import financeNav from "../navs/financeNav";
 import { setAppState } from "../store/appSlice";
 
 const AppSidebar = () => {
@@ -39,14 +40,16 @@ const AppSidebar = () => {
 		case "parent":
 			navConfig = parentNav;
 			break;
+		case "finance":
+			navConfig = financeNav;
+			break;
 		default:
 			navConfig = [];
 	}
 
 	return (
 		<CSidebar
-			className="border-end rounded-end"
-			// colorScheme="dark"
+			className="border-end rounded-end bg-body"
 			position="fixed"
 			unfoldable={unfoldable}
 			visible={sidebarShow}

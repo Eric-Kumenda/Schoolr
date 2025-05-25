@@ -13,24 +13,36 @@ import {
 	CTableBody,
 	CTableDataCell,
 	CFormInput,
-	CButton,
 	CAvatar,
+	CModal,
+	CModalHeader,
+	CModalTitle,
+	CModalBody,
+	CModalFooter,
+	CButton,
 } from "@coreui/react";
 import { useSelector, useDispatch } from "react-redux";
 import avatar4 from "./../../assets/images/avatars/4.jpg"; // Placeholder avatar
-import { fetchSchoolStudents } from "../../store/schoolSlice";
+import {
+	fetchSchoolStudents,
+	setSelectedStudent,
+} from "../../store/schoolSlice";
+import StudentProfile from "./StudentProfile";
 
 const ClassList = () => {
 	const dispatch = useDispatch();
-	const { schoolId } = useSelector((state) => state.auth.schoolId);
+	const { schoolId } = useSelector((state) => state.auth);
 	const { studentsData, loading, error } = useSelector(
 		(state) => state.school
 	);
 	const [selectedCohort, setSelectedCohort] = useState("");
-	const [selectedCohortLabel, setSelectedCohortLabel] = useState("");
 	const [selectedStream, setSelectedStream] = useState("");
 	const [searchQuery, setSearchQuery] = useState("");
-	const [currentClassStudents, setCurrentClassStudents] = useState([]);
+
+	const selectedStudent = useSelector(
+		(state) => state.school.selectedStudent
+	);
+	const [modalVisible, setModalVisible] = useState(false);
 
 	useEffect(() => {
 		if (schoolId) {
@@ -38,71 +50,62 @@ const ClassList = () => {
 		}
 	}, [dispatch, schoolId]);
 
+	// Extracting unique cohorts and streams
 	const cohorts = useMemo(() => {
 		if (!studentsData) return [];
-		return studentsData.map((cohort) => {
-			const firstStudent = cohort.students?.[0];
-			const studyYear = firstStudent?.current_study_year ?? "Unknown";
-			return {
-				value: cohort.cohort,
-				label: `Form ${studyYear}`,
-			};
-		});
+		return [
+			...new Set(
+				studentsData.map((student) => student.current_study_year)
+			),
+		].map((current_study_year) => ({
+			value: current_study_year.toString(),
+			label: `Form ${current_study_year}`,
+		}));
 	}, [studentsData]);
 
 	const streams = useMemo(() => {
 		if (!selectedCohort || !studentsData) return [];
-		const selectedCohortData = studentsData.find(
-			(cohort) => cohort.cohort === selectedCohort
+		const filteredStudents = studentsData.filter(
+			(student) =>
+				student.current_study_year.toString() === selectedCohort
 		);
-		if (selectedCohortData && selectedCohortData.students) {
-			return [
-				...new Set(
-					selectedCohortData.students
-						.map((student) => student.stream)
-						.filter(Boolean)
-				),
-			].map((stream) => ({ value: stream, label: stream }));
-		}
-		return [];
+		return [
+			...new Set(
+				filteredStudents
+					.map((student) => student.stream)
+					.filter(Boolean)
+			),
+		].map((stream) => ({ value: stream, label: stream }));
 	}, [selectedCohort, studentsData]);
 
-	useEffect(() => {
-		if (selectedCohort && selectedStream && studentsData) {
-			const selectedCohortData = studentsData.find(
-				(cohort) => cohort.cohort === selectedCohort
-			);
-			if (selectedCohortData && selectedCohortData.students) {
-				const filteredStudents = selectedCohortData.students.filter(
-					(student) => student.stream === selectedStream
-				);
-				setCurrentClassStudents(filteredStudents);
-				setSelectedCohortLabel(selectedCohortData.students[0].current_study_year)
-			} else {
-				setCurrentClassStudents([]);
-			}
-		} else {
-			setCurrentClassStudents([]);
-		}
-	}, [selectedCohort, selectedStream, studentsData]);
-
+	// Filtered students based on cohort, stream, and search query
 	const filteredClassStudents = useMemo(() => {
-		if (!currentClassStudents) return [];
-		return currentClassStudents.filter((student) =>
-			Object.values(student).some((value) =>
-				String(value).toLowerCase().includes(searchQuery.toLowerCase())
-			)
+		let filtered = studentsData?.filter(
+			(student) =>
+				student.current_study_year.toString() === selectedCohort &&
+				student.stream === selectedStream
 		);
-	}, [currentClassStudents, searchQuery]);
+		if (searchQuery) {
+			filtered = filtered.filter((student) =>
+				Object.values(student).some((value) =>
+					String(value)
+						.toLowerCase()
+						.includes(searchQuery.toLowerCase())
+				)
+			);
+		}
+		return filtered;
+	}, [studentsData, selectedCohort, selectedStream, searchQuery]);
 
 	// Placeholder class information
 	const classInfo = useMemo(() => {
 		if (selectedCohort && selectedStream) {
+			const filtered = filteredClassStudents;
 			return {
 				teacherName: "Mr./Ms. Placeholder Teacher",
 				teacherContact: "+254 7XXXXXXXXX",
 				teacherPhoto: avatar4,
-				studentCount: currentClassStudents.length,
+				studentCount: filtered.length,
 				classRank: "N/A",
 				previousMeanScore: "N/A",
 			};
@@ -115,7 +118,7 @@ const ClassList = () => {
 			classRank: "",
 			previousMeanScore: "",
 		};
-	}, [selectedCohort, selectedStream, currentClassStudents.length]);
+	}, [selectedCohort, selectedStream, filteredClassStudents?.length]);
 
 	const calculateAge = (dob) => {
 		if (!dob) return "N/A";
@@ -134,6 +137,14 @@ const ClassList = () => {
 		}
 
 		return age;
+	};
+	const openStudentModal = (student) => {
+		dispatch(setSelectedStudent(student));
+		setModalVisible(true);
+	};
+
+	const closeStudentModal = () => {
+		setModalVisible(false);
 	};
 
 	if (loading) {
@@ -249,7 +260,7 @@ const ClassList = () => {
 								</CRow>
 
 								<h5>
-									Students in Form {selectedCohortLabel} -{" "}
+									Students in Form {selectedCohort} -{" "}
 									{selectedStream}
 								</h5>
 								<CTable striped bordered responsive>
@@ -277,20 +288,28 @@ const ClassList = () => {
 												Age
 											</CTableHeaderCell>
 											<CTableHeaderCell>
-												KCPE Mark
+												KCPE Index No.
 											</CTableHeaderCell>
-											{/* Add other relevant columns */}
 										</CTableRow>
 									</CTableHead>
 									<CTableBody>
 										{filteredClassStudents.map(
 											(student, index) => (
 												<CTableRow key={student.adm_no}>
-													<CTableDataCell className="w-auto">
-														{index + 1}.{" "}
-													</CTableDataCell>
 													<CTableDataCell>
+														{index + 1}
+													</CTableDataCell>
+													<CTableDataCell className="d-flex justify-content-between">
 														{student.adm_no}
+														<button
+															className="btn btn-sm btn-outline-info"
+															onClick={() => {
+																openStudentModal(
+																	student
+																);
+															}}>
+															<i className="fa-regular fa-user"></i>
+														</button>
 													</CTableDataCell>
 													<CTableDataCell>{`${
 														student.first_name
@@ -312,13 +331,12 @@ const ClassList = () => {
 													<CTableDataCell>
 														{calculateAge(
 															student.DOB
-														)}
+														)}{" "}
 														Yrs
 													</CTableDataCell>
 													<CTableDataCell>
-														{student.adm_no}
+														{student.kcpe_index_no}
 													</CTableDataCell>
-													{/* Add other relevant data cells */}
 												</CTableRow>
 											)
 										)}
@@ -335,6 +353,28 @@ const ClassList = () => {
 								class list.
 							</p>
 						)}
+
+						{/* Student Info Modal remains the same */}
+						<CModal
+							visible={modalVisible}
+							onClose={closeStudentModal}
+							size="lg">
+							<CModalHeader>
+								<CModalTitle>Student Information</CModalTitle>
+							</CModalHeader>
+							<CModalBody>
+								{selectedStudent && (
+									<StudentProfile isModal={true} />
+								)}
+							</CModalBody>
+							<CModalFooter>
+								<CButton
+									color="secondary"
+									onClick={closeStudentModal}>
+									Close
+								</CButton>
+							</CModalFooter>
+						</CModal>
 					</CCardBody>
 				</CCard>
 			</CCol>

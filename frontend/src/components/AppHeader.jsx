@@ -51,7 +51,7 @@ const AppHeader = ({ routes }) => {
 
 	return (
 		<CHeader
-			position="sticky"
+			position="sticky bg-body"
 			className="mb-4 p-0 rounded-bottom"
 			ref={headerRef}>
 			<CContainer className="border-bottom headerGradient px-4" fluid>

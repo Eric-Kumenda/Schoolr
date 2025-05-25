@@ -65,12 +65,20 @@ app.use(passport.initialize());
 const authRoutes = require("./routes/authRoutes");
 const schoolRoutes = require("./routes/schoolRoutes");
 const linkRoutes = require("./routes/linkRoutes");
+const examRoutes = require('./routes/examRoutes')
+const studentRoutes = require('./routes/studentRoutes')
+const chatRoutes = require('./routes/chatRoutes')
+const financeRoutes = require('./routes/financeRoutes')
+const attendanceRoutes = require('./routes/attendanceRoutes')
 
 app.use("/api/auth", authRoutes);
 app.use("/api/school", schoolRoutes);
 app.use("/api/link", linkRoutes);
-app.use("/api/students", require("./routes/studentRoutes"));
-app.use("/api/chat", require("./routes/chatRoutes"));
+app.use("/api/students", studentRoutes);
+app.use("/api/chat", chatRoutes);
+app.use("/api/finance", financeRoutes);
+app.use("/api/exams", examRoutes);
+app.use("/api/attendance", attendanceRoutes);
 
 const activeUsers = new Map(); // store users & their socket ids
 
