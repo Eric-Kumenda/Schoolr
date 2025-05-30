@@ -51,7 +51,6 @@ const CallHandler = () => {
 	}, []);
 
 	const acceptCall = useCallback(async () => {
-		console.log("acceptCall CALLED"); // <---- ADD THIS
 		setCallActive(true);
 		setCallActiveModalVisible(true);
 		const stream = await startWebRTC(

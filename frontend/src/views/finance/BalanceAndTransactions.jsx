@@ -13,12 +13,12 @@ import {
     CTableRow,
 } from '@coreui/react';
 import { useDispatch, useSelector } from 'react-redux';
-import { getStudentBalance, getStudentTransactions, clearStudentFinanceData } from '../../store/schoolSlice'; // Adjust path
+import { getStudentBalance, getStudentTransactions, clearStudentFinanceData } from '../../store/financeSlice'; // Adjust path
 
 const BalanceAndTransactions = ({ studentId }) => {
     const dispatch = useDispatch();
-    const { studentBalance, transactions, billingLoading, billingError } = useSelector((state) => state.school);
-    const studentData = useSelector((state) => {
+    const { studentBalance, transactions, billingLoading, billingError } = useSelector((state) => state.finance);
+    /*const studentData = useSelector((state) => {
         // Find the student data based on studentId from your studentsData
         if (!studentId || !state.school.studentsData) return null;
         for (const cohort of state.school.studentsData) {
@@ -26,7 +26,8 @@ const BalanceAndTransactions = ({ studentId }) => {
             if (found) return found;
         }
         return null;
-    });
+    });*/
+    console.log(studentBalance)
 
     useEffect(() => {
         if (studentId) {
@@ -53,7 +54,7 @@ const BalanceAndTransactions = ({ studentId }) => {
 
     return (
         <CRow>
-            <CCol md={6}>
+            <CCol>
                 <CCard>
                     <CCardHeader>
                         <strong>Account Balance</strong>

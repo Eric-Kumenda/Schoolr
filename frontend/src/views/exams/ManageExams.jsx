@@ -65,7 +65,7 @@ const ManageExams = () => {
 
     return (
         <CRow>
-            <CCol xs={12}>
+            <CCol lg={10}>
                 <CCard className="mb-4">
                     <CCardHeader>
                         <strong>Manage Exams</strong>

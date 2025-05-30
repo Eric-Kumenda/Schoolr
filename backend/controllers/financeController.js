@@ -1,63 +1,74 @@
-const { School, Student, Billing } = require("../models/newSchoolModel");
+const { default: mongoose } = require("mongoose");
+const {
+	School,
+	Student,
+	Billing,
+	Transaction,
+} = require("../models/newSchoolModel");
 //const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 
 exports.billCohort = async (req, res) => {
 	try {
 		const { cohortId } = req.params;
 		const { description, amount, dueDate } = req.body;
-		const schoolId = req.user.schoolId; // Assuming schoolId is available in req.user
+		const schoolId = req.user.schoolObjectId;
 
 		if (!description || !amount) {
-			return res
-				.status(400)
-				.json({ message: "Description and amount are required." });
+			return res.status(400).json({
+				message: "Description and amount are required.",
+			});
 		}
 
 		const students = await Student.find({
 			schoolId: schoolId,
-			cohort: cohortId,
-		});
+			current_study_year: cohortId.toString(),
+		}).select("_id"); // Only need student IDs
 
 		if (!students || students.length === 0) {
-			return res
-				.status(404)
-				.json({
-					message: `No students found in cohort ${cohortId} for this school.`,
-				});
-		}
-
-		const billingCode = `BILL-<span class="math-inline">\{Date\.now\(\)\}\-</span>{cohortId}`; // Generate a unique billing code
-		const createdBillings = [];
-
-		for (const student of students) {
-			const newBilling = new Billing({
-				billingCode: `<span class="math-inline">\{billingCode\}\-</span>{student.studentId}`, // Make it unique per student
-				description,
-				amount,
-				dueDate,
-				createdBy: req.user._id, // Assuming user info is available in req.user
-				schoolId: schoolId,
-				studentIds: [student._id], // Link to the individual student
+			return res.status(404).json({
+				message: `No students found in Form ${cohortId} for this school.`,
 			});
-
-			const savedBilling = await newBilling.save();
-
-			// Optionally, update the student's account balance and add a transaction
-			student.accountBalance += amount;
-			student.transactions.push(savedBilling._id);
-			await student.save();
-
-			createdBillings.push(savedBilling);
 		}
+
+		const studentIds = students.map((s) => s._id);
+		const billingCode = `BILL-${Date.now()}-${cohortId}`;
+
+		// Create a single billing document
+		const newBilling = new Billing({
+			billingCode,
+			description,
+			amount,
+			dueDate,
+			cohort: cohortId,
+			studentIds,
+			createdBy: req.user.id,
+			schoolId,
+		});
+
+		const savedBilling = await newBilling.save();
+
+		// (Optional) Create transactions for each student
+		/*
+		const transactions = studentIds.map((studentId) => ({
+			studentId,
+			transactionType: "BILLING",
+			description,
+			amount,
+			transactionDate: new Date(),
+			createdBy: req.user.id,
+		}));
+
+		await Transaction.insertMany(transactions);
+		*/
 
 		res.status(201).json({
-			message: `Billing created for ${students.length} students in cohort ${cohortId}.`,
-			billings: createdBillings,
+			message: `Billing created for ${students.length} students in Form ${cohortId}.`,
+			status: "success",
 		});
 	} catch (error) {
-		console.error("Error billing cohort:", error);
+		console.error("Error billing Form Cohort:", error);
 		res.status(500).json({
-			message: "Failed to bill cohort.",
+			message: "Failed to bill Form Cohort.",
 			error: error.message,
 		});
 	}
@@ -67,7 +78,7 @@ exports.billStudent = async (req, res) => {
 	try {
 		const { studentId } = req.params;
 		const { description, amount, dueDate } = req.body;
-		const schoolId = req.user.schoolId;
+		const schoolId = req.user.schoolObjectId;
 
 		if (!description || !amount) {
 			return res
@@ -86,27 +97,22 @@ exports.billStudent = async (req, res) => {
 				.json({ message: `Student not found in this school.` });
 		}
 
-		const billingCode = `BILL-<span class="math-inline">\{Date\.now\(\)\}\-</span>{student.studentId}`;
+		const billingCode = `BILL-${Date.now()}-${student._id}`;
 		const newBilling = new Billing({
 			billingCode,
 			description,
 			amount,
 			dueDate,
-			createdBy: req.user._id,
+			createdBy: req.user.id,
 			schoolId: schoolId,
 			studentIds: [student._id],
 		});
 
 		const savedBilling = await newBilling.save();
 
-		// Update the student's account balance and add a transaction
-		student.accountBalance += amount;
-		student.transactions.push(savedBilling._id);
-		await student.save();
-
 		res.status(201).json({
 			message: `Billing created for student ${student.adm_no}.`,
-			billing: savedBilling,
+			status: "success",
 		});
 	} catch (error) {
 		console.error("Error billing student:", error);
@@ -120,12 +126,13 @@ exports.billStudent = async (req, res) => {
 exports.getStudentBalance = async (req, res) => {
 	try {
 		const { studentId } = req.params;
-		const schoolId = req.user.schoolId; // Assuming schoolId is available
+		const schoolId = req.user.schoolObjectId;
 
+		// Ensure the student belongs to the correct school
 		const student = await Student.findOne({
 			_id: studentId,
 			schoolId: schoolId,
-		}).select("accountBalance adm_no");
+		}).select("adm_no");
 
 		if (!student) {
 			return res
@@ -133,14 +140,28 @@ exports.getStudentBalance = async (req, res) => {
 				.json({ message: "Student not found in this school." });
 		}
 
-		// Add authorization check here based on user role
-		// For example, if the requester is a parent, verify if studentId is in their linked students.
-		// If the requester is a teacher, verify if the student is in their class (you'll need to set up this relationship).
+		// Aggregate the student's transactions to calculate the balance
+		const result = await Transaction.aggregate([
+			{ $match: { studentId: new mongoose.Types.ObjectId(studentId) } },
+			{
+				$group: {
+					_id: "$studentId",
+					total: { $sum: "$amount" },
+				},
+			},
+		]);
+
+		const accountBalance = result.length > 0 ? result[0].total : 0;
+		console.log({
+			studentId: student._id,
+			admNo: student.adm_no,
+			accountBalance,
+		});
 
 		res.status(200).json({
 			studentId: student._id,
 			admNo: student.adm_no,
-			accountBalance: student.accountBalance,
+			accountBalance,
 		});
 	} catch (error) {
 		console.error("Error getting student balance:", error);
@@ -199,22 +220,18 @@ exports.recordPayment = async (req, res) => {
 		} = req.body;
 
 		if (role !== "finance") {
-			return res
-				.status(400)
-				.json({
-					message: "School ID not found for authenticated user.",
-				});
+			return res.status(400).json({
+				message: "School ID not found for authenticated user.",
+			});
 		}
 		const school = await School.findOne({ schoolId: schoolId });
 		const schoolObjectId = school._id;
 		const createdBy = userId;
 
 		if (!schoolObjectId) {
-			return res
-				.status(400)
-				.json({
-					message: "School ID not found for authenticated user.",
-				});
+			return res.status(400).json({
+				message: "School ID not found for authenticated user.",
+			});
 		}
 
 		// 1. Find the student by adm_no and schoolId
@@ -224,11 +241,9 @@ exports.recordPayment = async (req, res) => {
 		});
 
 		if (!student) {
-			return res
-				.status(404)
-				.json({
-					message: `Student with admission number ${studentAdmNo} not found in this school.`,
-				});
+			return res.status(404).json({
+				message: `Student with admission number ${studentAdmNo} not found in this school.`,
+			});
 		}
 
 		// 2. Create a new Transaction document
@@ -447,3 +462,88 @@ exports.finalizeStripePayment = async (req, res) => {
         res.status(500).json({ message: 'Failed to finalize Stripe payment.', error: error.message });
     }
 };*/
+
+// New function to get student's fee balance and transactions
+exports.getStudentFinanceDetails = async (req, res) => {
+	try {
+		const { studentId } = req.params;
+		const schoolId = req.user.schoolId; // Assuming schoolId from authentication middleware
+
+		if (!schoolId) {
+			return res.status(400).json({ message: "School ID not found." });
+		}
+
+		// Security: If the requesting user is a student, ensure they can only view their own details
+		// if (req.user.role === 'student' && req.user.studentId.toString() !== studentId) {
+		//     return res.status(403).json({ message: "Unauthorized to view other student's financial details." });
+		// }
+
+		// Fetch student's fee balance
+		//const student = await Student.findById(
+		//	studentId,
+		//	"accountBalance"
+		//).lean();
+		//const accountBalance = student ? student.accountBalance : 0;
+
+		// Fetch student's transactions, sorted by date
+		const transactions = await Transaction.find(
+			{ studentId: studentId },
+			null,
+			{ sort: { transactionDate: -1 } }
+		).lean() || [];
+		const billings = await Billing.find({
+			studentIds: studentId,
+		}).lean() || [];
+
+		// Total from billing records (e.g., not yet converted to transactions)
+		const billedAmount = billings.reduce(
+			(total, bill) =>
+				bill.studentIds.some(
+					(id) => id.toString() === studentId.toString()
+				)
+					? total + bill.amount
+					: total,
+			0
+		);
+
+		// Total from transactions
+		const transactionTotal = transactions.reduce(
+			(total, txn) => total + txn.amount,
+			0
+		);
+
+		// Final balance
+		const balance = billedAmount + transactionTotal;
+
+		const billingAsTransactions = billings.map((bill) => ({
+			_id: bill._id,
+			studentId: studentId,
+			transactionType: "BILLING",
+			description: bill.description,
+			amount: bill.amount,
+			transactionDate: bill.billingDate || bill.createdAt, // or dueDate if preferred
+			paymentMethod: null,
+			reference: bill.billingCode,
+			createdBy: bill.createdBy,
+			source: "billing", // optional: to distinguish origin
+		}));
+
+		const allEntries = [...transactions, ...billingAsTransactions];
+
+		// Sort by date (most recent first)
+		allEntries.sort(
+			(a, b) => new Date(b.transactionDate) - new Date(a.transactionDate)
+		);
+
+		res.status(200).json({
+			accountBalance: balance,
+			transactions: allEntries,
+		});
+	} catch (error) {
+		console.error("Error fetching student finance details:", error);
+		res.status(500).json({
+			message: "Failed to fetch student finance details.",
+			error: error.message,
+		});
+	}
+};

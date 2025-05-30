@@ -12,6 +12,7 @@ const initialState = {
 	last_name: null,
 	email: null,
 	role: null,
+	myStudentId: null,
 	token: tokenFromStorage || null,
 	loading: false,
 	error: null,
@@ -86,11 +87,11 @@ export const googleLoginUser = createAsyncThunk(
 
 export const linkUserToSchool = createAsyncThunk(
 	"admin/linkUserToSchool",
-	async ({ email, role, isVerified }, { rejectWithValue }) => {
+	async ({ email, role, isVerified, adm }, { rejectWithValue }) => {
 		try {
 			const response = await axios.post(
 				"/school/admin/link-user-to-school",
-				{ email, role, isVerified }
+				{ email, role, isVerified, adm }
 			);
 			return response.data; // Expecting { message, user }
 		} catch (error) {
@@ -114,6 +115,7 @@ const authSlice = createSlice({
 			state.email = null;
 			state.role = null;
 			state.token = null;
+			state.myStudentId = null;
 			socket.disconnect();
 			localStorage.removeItem("token");
 		},
@@ -149,6 +151,10 @@ const authSlice = createSlice({
 				state.last_name = action.payload.user.last_name;
 				state.email = action.payload.user.email;
 				state.role = action.payload.user.role;
+				state.myStudentId =
+					action.payload.user.role === "student"
+						? action.payload.user.studentId
+						: null;
 				localStorage.setItem("token", action.payload.token);
 				state.isReady = true;
 			})
@@ -177,6 +183,10 @@ const authSlice = createSlice({
 				state.last_name = action.payload.user.last_name;
 				state.email = action.payload.user.email;
 				state.role = action.payload.user.role;
+				state.myStudentId =
+					action.payload.user.role === "student"
+						? action.payload.user.studentId
+						: null;
 				localStorage.setItem("token", action.payload.token);
 				state.isReady = true;
 			})
@@ -195,6 +205,10 @@ const authSlice = createSlice({
 				state.last_name = action.payload.user.last_name;
 				state.email = action.payload.user.email;
 				state.role = action.payload.user.role;
+				state.myStudentId =
+					action.payload.user.role === "student"
+						? action.payload.user.studentId
+						: null;
 				localStorage.setItem("token", action.payload.token);
 				state.isReady = true;
 			})
@@ -222,5 +236,6 @@ const authSlice = createSlice({
 	},
 });
 
-export const { logout, setUser, setToken, clearUserLinkingState } = authSlice.actions;
+export const { logout, setUser, setToken, clearUserLinkingState } =
+	authSlice.actions;
 export default authSlice.reducer;

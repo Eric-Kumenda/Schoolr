@@ -1,3 +1,4 @@
+const { default: mongoose } = require("mongoose");
 const {
 	Exam,
 	ExamResult,
@@ -80,7 +81,7 @@ exports.createExam = async (req, res) => {
 // 2. Get Exams for a School (Admin, Teacher)
 exports.getExams = async (req, res) => {
 	try {
-		const schoolId = req.user.schoolId; // From authenticated user's session
+		const schoolId = req.user.schoolObjectId; // From authenticated user's session
 
 		if (!schoolId) {
 			return res.status(400).json({
@@ -110,7 +111,7 @@ exports.getStudentsForResultsEntry = async (req, res) => {
 	try {
 		const { examId } = req.params;
 		const { cohort, stream } = req.query; // Optional filters
-		const schoolId = req.user.schoolId;
+		const schoolId = req.user.schoolObjectId;
 
 		if (!schoolId) {
 			return res.status(400).json({
@@ -186,7 +187,7 @@ exports.updateStudentResult = async (req, res) => {
 	try {
 		const { examId, studentId } = req.params;
 		const { subject, marks, comment } = req.body; // Expecting marks for a specific subject
-		const schoolId = req.user.schoolId;
+		const schoolId = req.user.schoolObjectId;
 		const lastUpdatedBy = req.user.id;
 
 		if (!schoolId) {
@@ -278,7 +279,7 @@ exports.updateStudentResult = async (req, res) => {
 exports.setExamOfficial = async (req, res) => {
 	try {
 		const { examId } = req.params;
-		const schoolId = req.user.schoolId;
+		const schoolId = req.user.schoolObjectId;
 		const publishedBy = req.user.id; // Admin who publishes
 
 		if (!schoolId) {
@@ -321,11 +322,11 @@ exports.getStudentExamResults = async (req, res) => {
 	try {
 		const { studentId } = req.params; // For parent/student views
 		const { examId } = req.query; // Optional filter to get results for a specific exam
-		const schoolId = req.user.schoolId;
+		const schoolObjectId = req.user.schoolObjectId;
 		const userRole = req.user.role;
 		const userId = req.user.id;
 
-		if (!schoolId) {
+		if (!schoolObjectId) {
 			return res.status(400).json({
 				message: "School ID not found for authenticated user.",
 			});
@@ -333,7 +334,7 @@ exports.getStudentExamResults = async (req, res) => {
 
 		let student;
 		// Authorization check
-		if (userRole === "parent") {
+		/*if (userRole === "parent") {
 			const parent = await Parent.findOne({
 				userId: userId,
 				studentIds: studentId,
@@ -343,21 +344,23 @@ exports.getStudentExamResults = async (req, res) => {
 					message: "Not authorized to view this student's results.",
 				});
 			}
-			student = await Student.findOne({ _id: studentId, schoolId });
-		} else if (userRole === "student") {
+			student = await Student.findOne({ _id: studentId, schoolObjectId });
+		} else*/ if (userRole === "student") {
 			// Assuming student user ID is linked to student document
-			student = await Student.findOne({ _id: userId, schoolId }); // If student user directly represents a student
+			student = await Student.findOne({
+				_id: studentId,
+				schoolId: schoolObjectId,
+			});
 			if (!student || student._id.toString() !== studentId) {
 				return res
 					.status(403)
 					.json({ message: "Not authorized to view these results." });
 			}
-		} else if (
-			userRole === "teacher" ||
-			userRole === "school_admin" ||
-			userRole === "super_admin"
-		) {
-			student = await Student.findOne({ _id: studentId, schoolId });
+		} else if (userRole === "teacher" || userRole === "admin") {
+			student = await Student.findOne({
+				_id: studentId,
+				schoolId: schoolObjectId,
+			});
 			if (!student) {
 				return res
 					.status(404)
@@ -369,7 +372,7 @@ exports.getStudentExamResults = async (req, res) => {
 				.json({ message: "Unauthorized role to view results." });
 		}
 
-		let query = { studentId: student._id, schoolId };
+		let query = { studentId: student._id, schoolId: schoolObjectId };
 		if (examId) {
 			query.examId = examId;
 		}
@@ -394,14 +397,13 @@ exports.getStudentExamResults = async (req, res) => {
 				return true; // Everyone can see official results
 			}
 			// For provisional results, only admins and teachers can see
-			return (
-				userRole === "school_admin" ||
-				userRole === "super_admin" ||
-				userRole === "teacher"
-			);
+			return userRole === "admin" || userRole === "teacher";
 		});
 
-		res.status(200).json({ studentResults: filteredResults });
+		res.status(200).json({
+			studentResults: filteredResults,
+			studentDetails: student,
+		});
 	} catch (error) {
 		console.error("Error fetching student exam results:", error);
 		res.status(500).json({
@@ -415,7 +417,7 @@ exports.getStudentExamResults = async (req, res) => {
 exports.getExamResultsByExamId = async (req, res) => {
 	try {
 		const { examId } = req.params;
-		const schoolId = req.user.schoolId;
+		const schoolId = req.user.schoolObjectId;
 		const userRole = req.user.role;
 
 		if (!schoolId) {
@@ -457,6 +459,219 @@ exports.getExamResultsByExamId = async (req, res) => {
 		console.error("Error fetching exam results by exam ID:", error);
 		res.status(500).json({
 			message: "Failed to fetch exam results.",
+			error: error.message,
+		});
+	}
+};
+
+exports.getCohortExamPerformance = async (req, res) => {
+	try {
+		// Assuming schoolId is available from authentication middleware (e.g., req.user.schoolId)
+		const schoolId = req.user.schoolObjectId;
+
+		if (!schoolId) {
+			return res
+				.status(400)
+				.json({
+					message: "School ID not found for authenticated user.",
+				});
+		}
+
+		const data = await ExamResult.aggregate([
+			{
+				$match: {
+					schoolId: new mongoose.Types.ObjectId(schoolId),
+					marks: { $ne: null }, // Ensure only results with actual marks are considered
+				},
+			},
+			// Step 1: Calculate average marks per student for each exam (across all subjects)
+			// This gives a student's overall performance for a specific exam
+			{
+				$group: {
+					_id: {
+						studentId: "$studentId",
+						examId: "$examId",
+					},
+					studentExamTotalMarks: { $sum: "$marks" },
+					studentExamSubjectCount: { $sum: 1 },
+				},
+			},
+			{
+				$project: {
+					_id: 0, // Exclude _id from this stage
+					studentId: "$_id.studentId",
+					examId: "$_id.examId",
+					studentAverageScore: {
+						$divide: [
+							"$studentExamTotalMarks",
+							"$studentExamSubjectCount",
+						],
+					},
+				},
+			},
+			// Step 2: Lookup Exam details to get examName and examDate for sorting and labeling
+			{
+				$lookup: {
+					from: "exams", // The actual collection name for the Exam model
+					localField: "examId",
+					foreignField: "_id",
+					as: "examDetails",
+				},
+			},
+			{
+				$unwind: "$examDetails", // Deconstructs the array generated by $lookup
+			},
+			// Step 3: Lookup Student details to get the cohort
+			{
+				$lookup: {
+					from: "students", // The actual collection name for the Student model
+					localField: "studentId",
+					foreignField: "_id",
+					as: "studentDetails",
+				},
+			},
+			{
+				$unwind: "$studentDetails", // Deconstructs the array generated by $lookup
+			},
+			// Step 4: Calculate the average performance per cohort per exam
+			{
+				$group: {
+					_id: {
+						examId: "$examId",
+						examName: "$examDetails.examName",
+						examDate: "$examDetails.examDate",
+						cohort: "$studentDetails.cohort",
+					},
+					cohortAverageScore: { $avg: "$studentAverageScore" }, // Average of student averages for this cohort and exam
+				},
+			},
+			// Step 5: Sort the results by exam date to ensure the x-axis is chronological
+			{
+				$sort: {
+					"_id.examDate": 1, // Sort by examDate ascending
+				},
+			},
+			// Step 6: Project to reshape the output into a cleaner format
+			{
+				$project: {
+					_id: 0, // Exclude the aggregation _id
+					examId: "$_id.examId",
+					examName: "$_id.examName",
+					examDate: "$_id.examDate",
+					cohort: "$_id.cohort",
+					averageScore: { $round: ["$cohortAverageScore", 2] }, // Round scores to 2 decimal places
+				},
+			},
+		]);
+
+		// Transform the flat array of results into the desired format for Chart.js
+		// { examLabels: ["Exam1", "Exam2"], cohortData: { "Cohort A": [score1, score2], "Cohort B": [score1, score2] } }
+		const examLabelsSet = new Set(); // Use a Set to get unique exam names and maintain order
+		const cohortDataMap = new Map(); // Map to store cohort -> { examName -> score }
+
+		data.forEach((item) => {
+			examLabelsSet.add(item.examName);
+			if (!cohortDataMap.has(item.cohort)) {
+				cohortDataMap.set(item.cohort, new Map());
+			}
+			cohortDataMap
+				.get(item.cohort)
+				.set(item.examName, item.averageScore);
+		});
+
+		const examLabels = Array.from(examLabelsSet); // Convert Set to Array for x-axis labels
+		const transformedCohortData = {};
+
+		cohortDataMap.forEach((examScoresMap, cohortName) => {
+			// For each cohort, create an array of scores corresponding to the examLabels order
+			const scoresForCohort = examLabels.map((examName) => {
+				return examScoresMap.get(examName) || 0; // Use 0 if a cohort doesn't have data for a specific exam
+			});
+			transformedCohortData[cohortName] = scoresForCohort;
+		});
+
+		res.status(200).json({
+			examLabels,
+			cohortData: transformedCohortData,
+		});
+	} catch (error) {
+		console.error("Error fetching cohort exam performance:", error);
+		res.status(500).json({
+			message: "Failed to fetch cohort exam performance.",
+			error: error.message,
+		});
+	}
+};
+
+// New function to get a list of exams for dropdown selection
+exports.getExamsListForDropdown = async (req, res) => {
+	try {
+		const schoolId = req.user.schoolObjectId; // Assuming schoolId from authentication middleware
+
+		if (!schoolId) {
+			return res.status(400).json({ message: "School ID not found." });
+		}
+
+		// Fetch exams, selecting only necessary fields and sorting by most recent
+		const exams = await Exam.find(
+			{ schoolId: new mongoose.Types.ObjectId(schoolId) },
+			{ _id: 1, examName: 1, examDate: 1 } // Select _id, examName, examDate
+		).sort({ examDate: -1, createdAt: -1 }); // Sort by examDate descending, then creation date
+
+		res.status(200).json(exams);
+	} catch (error) {
+		console.error("Error fetching exams for dropdown:", error);
+		res.status(500).json({
+			message: "Failed to fetch exams list.",
+			error: error.message,
+		});
+	}
+};
+
+// New function to get a student's results for a specific exam
+exports.getStudentExamResultsForExam = async (req, res) => {
+	try {
+		const { studentId, examId } = req.params;
+		const schoolId = req.user.schoolObjectId; // Assuming schoolId from authentication middleware
+
+		if (!schoolId) {
+			return res.status(400).json({ message: "School ID not found." });
+		}
+
+		// Security: If the requesting user is a student, ensure they can only view their own results
+		if (req.user.role !== "student") {
+			//&& req.user.studentId.toString() !== studentId.toString()) {
+			return res
+				.status(403)
+				.json({
+					message: "Unauthorized to view other student's results.",
+				});
+		}
+
+		// Fetch exam results for the specified student, exam, and school
+		const results = await ExamResult.find(
+			{
+				studentId: new mongoose.Types.ObjectId(studentId),
+				examId: new mongoose.Types.ObjectId(examId),
+				schoolId: new mongoose.Types.ObjectId(schoolId),
+			},
+			{
+				subject: 1,
+				marks: 1,
+				grade: 1,
+				comment: 1,
+				_id: 0, // Exclude the default _id from individual result documents
+			}
+		);
+
+		res.status(200).json(results);
+	} catch (error) {
+		console.error(
+			"Error fetching student exam results for specific exam:",
+			error
+		);
+		res.status(500).json({
+			message: "Failed to fetch student exam results.",
 			error: error.message,
 		});
 	}

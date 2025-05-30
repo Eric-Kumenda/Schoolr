@@ -1,3 +1,4 @@
+const { default: mongoose } = require("mongoose");
 const { School, Student, Teacher } = require("../models/newSchoolModel");
 const supabase = require("../supabaseClient");
 
@@ -14,24 +15,29 @@ exports.querySchool = async (req, res) => {
 		// Get total student count
 		const totalStudentsResult = await Student.aggregate([
 			{ $match: { schoolId: schoolObjectId } },
-			{ $count: "totalStudents" } // Use $count to get the count of matched documents
+			{ $count: "totalStudents" }, // Use $count to get the count of matched documents
 		]);
 
 		// Get total teacher count
 		const totalTeachersResult = await Teacher.aggregate([
 			{ $match: { schoolId: schoolObjectId } },
-			{ $count: "totalTeachers" } // Use $count to get the count of matched documents
+			{ $count: "totalTeachers" }, // Use $count to get the count of matched documents
 		]);
 
 		// Extract counts (default to 0 if no results)
-		const totalStudents = totalStudentsResult.length > 0 ? totalStudentsResult[0].totalStudents : 0;
-		const totalTeachers = totalTeachersResult.length > 0 ? totalTeachersResult[0].totalTeachers : 0;
-
+		const totalStudents =
+			totalStudentsResult.length > 0
+				? totalStudentsResult[0].totalStudents
+				: 0;
+		const totalTeachers =
+			totalTeachersResult.length > 0
+				? totalTeachersResult[0].totalTeachers
+				: 0;
 
 		res.status(200).json({
 			totalStudents: totalStudents,
 			totalTeachers: totalTeachers,
-			message: "School Query Successful"
+			message: "School Query Successful",
 		});
 	} catch (error) {
 		console.error("Error updating student:", error);
@@ -527,65 +533,165 @@ exports.updateTeacher = async (req, res) => {
 
 // New function to link a user (teacher, finance, student, parent) to a school
 exports.linkUserToSchool = async (req, res) => {
-    try {
-        const { email, role, isVerified } = req.body;
-        const schoolId = req.user.schoolId; // Comes from requireAdmin middleware, which extracts from JWT
+	try {
+		const { email, role, isVerified, adm } = req.body;
+		const schoolId = req.user.schoolId; // Comes from requireAdmin middleware, which extracts from JWT
 
-        if (!email || !role) {
-            return res.status(400).json({ message: 'Email and Role are required.' });
-        }
+		if (!email || !role) {
+			return res
+				.status(400)
+				.json({ message: "Email and Role are required." });
+		}
 
-        // Basic validation for role
-        const allowedRoles = ['teacher', 'finance', 'student', 'parent', 'admin'];
-        if (!allowedRoles.includes(role)) {
-            return res.status(400).json({ message: `Invalid role: ${role}. Allowed roles are: ${allowedRoles.join(', ')}.` });
-        }
+		// Basic validation for role
+		const allowedRoles = [
+			"teacher",
+			"finance",
+			"student",
+			"parent",
+			"admin",
+		];
+		if (!allowedRoles.includes(role)) {
+			return res.status(400).json({
+				message: `Invalid role: ${role}. Allowed roles are: ${allowedRoles.join(
+					", "
+				)}.`,
+			});
+		}
 
-        // 1. Find the user in Supabase by email
-        // Note: Supabase's auth.users table is typically what you'd manage with the admin client.
-        // If you have a separate `public.users` table, you query that.
-        // Assuming your `public.users` table holds `email`, `role`, `schoolId`, `isVerified`
-        const { data: user, error: findError } = await supabase
-            .from('users') // Your Supabase table name where user roles and schoolId are stored
-            .select('id, email') // Select only what's needed for identification
-            .eq('email', email)
-            .single();
+		// 1. Find the user in Supabase by email
+		// Note: Supabase's auth.users table is typically what you'd manage with the admin client.
+		// If you have a separate `public.users` table, you query that.
+		// Assuming your `public.users` table holds `email`, `role`, `schoolId`, `isVerified`
+		const { data: user, error: findError } = await supabase
+			.from("users") // Your Supabase table name where user roles and schoolId are stored
+			.select("id, email") // Select only what's needed for identification
+			.eq("email", email)
+			.single();
 
-        if (findError) {
-            console.error("Supabase user find error:", findError);
-            if (findError.code === 'PGRST116') { // No rows found (specific to PostgREST for single())
-                return res.status(404).json({ message: `User with email ${email} not found in Supabase.` });
-            }
-            return res.status(500).json({ message: `Error finding user in Supabase: ${findError.message}` });
-        }
+		if (findError) {
+			console.error("Supabase user find error:", findError);
+			if (findError.code === "PGRST116") {
+				// No rows found (specific to PostgREST for single())
+				return res.status(404).json({
+					message: `User with email ${email} not found in Supabase.`,
+				});
+			}
+			return res.status(500).json({
+				message: `Error finding user in Supabase: ${findError.message}`,
+			});
+		}
 
-        if (!user) {
-            return res.status(404).json({ message: `User with email ${email} not found.` });
-        }
+		if (!user) {
+			return res
+				.status(404)
+				.json({ message: `User with email ${email} not found.` });
+		}
 
-        // 2. Update the user's record in Supabase
-        const { data: updatedUser, error: updateError } = await supabase
-            .from('users') // Same table
-            .update({
-                role: role,
-                schoolId: schoolId.toString(), // Store MongoDB ObjectId as a string in Supabase
-                isVerified: !!isVerified, // Ensure it's a boolean
-            })
-            .eq('id', user.id) // Update by Supabase user ID
-            .select(); // Return the updated record
+		let studentId, stud;
+		if (role === "student") {
+			const studentDocument = await Student.findOne({ adm_no: adm });
+			if (!studentDocument) {
+				return res
+					.status(404)
+					.json({ message: `Student with adm_no ${adm} not found` });
+			}
+			stud = studentDocument;
+			studentId = studentDocument._id;
+		}
 
-        if (updateError) {
-            console.error("Supabase user update error:", updateError);
-            return res.status(500).json({ message: `Failed to update user in Supabase: ${updateError.message}` });
-        }
+		// 2. Update the user's record in Supabase
+		const { data: updatedUser, error: updateError } = await supabase
+			.from("users") // Same table
+			.update({
+				role: role,
+				schoolId: schoolId.toString(), // Store MongoDB ObjectId as a string in Supabase
+				isVerified: !!isVerified, // Ensure it's a boolean
+				studentId: studentId ? studentId : null,
+			})
+			.eq("id", user.id) // Update by Supabase user ID
+			.select(); // Return the updated record
 
-        res.status(200).json({
-            message: `User ${email} successfully linked to school with role ${role}.`,
-            user: updatedUser[0], // Supabase update returns an array for select()
-        });
+		if (updateError) {
+			console.error("Supabase user update error:", updateError);
+			return res.status(500).json({
+				message: `Failed to update user in Supabase: ${updateError.message}`,
+			});
+		}
 
-    } catch (error) {
-        console.error("Error linking user to school:", error);
-        res.status(500).json({ message: "Server error linking user to school.", error: error.message });
-    }
+		res.status(200).json({
+			message: `User ${email} successfully linked to school with role ${role}${
+				role === "student"
+					? " and Adm No: " +
+					  stud.adm_no +
+					  " Name: " +
+					  stud.first_name
+					: null
+			}.`,
+			user: updatedUser[0], // Supabase update returns an array for select()
+		});
+	} catch (error) {
+		console.error("Error linking user to school:", error);
+		res.status(500).json({
+			message: "Server error linking user to school.",
+			error: error.message,
+		});
+	}
+};
+
+// New function to get school payment details
+exports.getSchoolPaymentDetails = async (req, res) => {
+	try {
+		const schoolId = req.user.schoolObjectId; // Assuming schoolId from authentication middleware
+
+		if (!schoolId) {
+			return res.status(400).json({ message: "School ID not found." });
+		}
+
+		// Fetch school's payment details
+		const school = await School.findById(schoolId, "paymentDetails").lean();
+		const paymentDetails = school ? school.paymentDetails : {};
+
+		res.status(200).json(paymentDetails);
+	} catch (error) {
+		console.error("Error fetching school payment details:", error);
+		res.status(500).json({
+			message: "Failed to fetch school payment details.",
+			error: error.message,
+		});
+	}
+};
+
+// New function to update school payment details
+exports.updateSchoolPaymentDetails = async (req, res) => {
+	try {
+		const schoolId = req.user.schoolObjectId; // Assuming schoolId from authentication middleware
+		const { paymentDetails } = req.body; // Payment details will be sent in the request body
+
+		if (!schoolId) {
+			return res.status(400).json({ message: "School ID not found." });
+		}
+
+		// Find the school and update its paymentDetails field
+		const updatedSchool = await School.findOneAndUpdate(
+			{ _id: new mongoose.Types.ObjectId(schoolId) },
+			{ $set: { paymentDetails: paymentDetails } },
+			{ new: true, runValidators: true } // Return the updated document and run schema validators
+		);
+
+		if (!updatedSchool) {
+			return res.status(404).json({ message: "School not found." });
+		}
+
+		res.status(200).json({
+			message: "School payment details updated successfully.",
+			paymentDetails: updatedSchool.paymentDetails, // Return the updated payment details
+		});
+	} catch (error) {
+		console.error("Error updating school payment details:", error);
+		res.status(500).json({
+			message: "Failed to update school payment details.",
+			error: error.message,
+		});
+	}
 };

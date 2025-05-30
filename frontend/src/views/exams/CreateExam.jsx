@@ -53,7 +53,7 @@ const CreateExam = () => {
 
     return (
         <CRow className='justify-content-center'>
-            <CCol md={10} lg={8}>
+            <CCol lg={10}>
                 <CCard>
                     <CCardHeader>
                         <strong>Create New Exam</strong>

@@ -61,7 +61,7 @@ const ExamOverview = () => {
 
     return (
         <CRow>
-            <CCol xs={12}>
+            <CCol lg={10}>
                 <CCard>
                     <CCardHeader>
                         <strong>Overview of Exam: {selectedExam ? `${selectedExam.examName} (${selectedExam.academicYear} - ${selectedExam.term})` : 'Loading Exam...'}</strong>

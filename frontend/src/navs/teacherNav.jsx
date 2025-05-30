@@ -41,28 +41,28 @@ const teacherNav = [
 			},
 		],
 	},
-	{
-		component: CNavGroup,
-		name: "Students",
-		icon: <i className="fa-solid fa-graduation-cap nav-icon"></i>,
-		items: [
-			{
-				component: CNavItem,
-				name: "Streams",
-				to: "/students/streams",
-			},
-			{
-				component: CNavItem,
-				name: "Classes",
-				to: "/students/classes",
-			},
-			{
-				component: CNavItem,
-				name: "Profile",
-				to: "/students/profile",
-			},
-		],
-	},
+		{
+			component: CNavGroup,
+			name: "Students",
+			icon: <i className="fa-solid fa-graduation-cap nav-icon"></i>,
+			items: [
+				{
+					component: CNavItem,
+					name: "List",
+					to: "/teacher/students/list",
+				},
+				{
+					component: CNavItem,
+					name: "Classes",
+					to: "/teacher/students/classes",
+				},
+				{
+					component: CNavItem,
+					name: "Profile",
+					to: "/teacher/students/profile",
+				},
+			],
+		},
 	{
 		component: CNavItem,
 		name: "Messages",
@@ -83,77 +83,6 @@ const teacherNav = [
 				component: CNavItem,
 				name: "Student Attendance",
 				to: "/teacher/students/:studentId/attendance",
-			},
-		],
-	},
-	{
-		component: CNavGroup,
-		name: "Admission",
-		icon: <i className="fa-solid fa-user-plus nav-icon"></i>,
-		items: [
-			{
-				component: CNavItem,
-				name: "New Student",
-				to: "/admission/new",
-			},
-			{
-				component: CNavItem,
-				name: "Current Student",
-				to: "/admission/current",
-			},
-		],
-	},
-	{
-		component: CNavGroup,
-		name: "Fees and Invoice",
-		icon: <i className="fa-solid fa-wallet nav-icon"></i>,
-		items: [
-			{
-				component: CNavItem,
-				name: "Officers",
-				to: "/finance/officers",
-			},
-			{
-				component: CNavItem,
-				name: "Balances",
-				to: "/finance/balances",
-			},
-			{
-				component: CNavItem,
-				name: "Expenditure",
-				to: "/finance/expenditure",
-			},
-			{
-				component: CNavItem,
-				name: "Claims",
-				to: "/finance/claims",
-			},
-		],
-	},
-	{
-		component: CNavGroup,
-		name: "Boarding",
-		icon: <i className="fa-regular fa-building-user nav-icon"></i>,
-		items: [
-			{
-				component: CNavItem,
-				name: "Houses",
-				to: "/boarding/houses",
-			},
-			{
-				component: CNavItem,
-				name: "Dorms",
-				to: "/boarding/dorms",
-			},
-			{
-				component: CNavItem,
-				name: "Patrons",
-				to: "/boarding/patrons",
-			},
-			{
-				component: CNavItem,
-				name: "Prefects",
-				to: "/boarding/prefects",
 			},
 		],
 	},

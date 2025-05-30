@@ -1,12 +1,25 @@
-import React from "react";
+import React, { useEffect } from "react";
 
 import CIcon from "@coreui/icons-react";
 import { cilChartPie } from "@coreui/icons";
 import { CCol, CRow, CWidgetStatsC } from "@coreui/react";
 
 import { useSelector, useDispatch } from "react-redux";
+import { fetchSchoolMetrics } from "../../store/schoolSlice";
+import CohortExamPerformanceChart from "../../views/exams/CohortExamPerformanceChart";
+import DailyAttendanceChart from "../../views/attendance/DailyAttendanceChart";
 
 const Dashboard = () => {
+	const dispatch = useDispatch();
+	const schoolId = useSelector((state) => state.auth.schoolId);
+	const { totalStudents, totalTeachers } = useSelector(
+		(state) => state.school.schoolMetrics
+	);
+
+	useEffect(() => {
+		dispatch(fetchSchoolMetrics(schoolId));
+	}, [schoolId, dispatch]);
+
 	return (
 		<>
 			<CRow>
@@ -19,7 +32,7 @@ const Dashboard = () => {
 						color="body"
 						progress={{ color: "primary", value: 100 }}
 						title="Total Students"
-						value="2,166"
+						value={totalStudents ? totalStudents : "0"}
 					/>
 				</CCol>
 				<CCol xs={12} md={4}>
@@ -43,8 +56,16 @@ const Dashboard = () => {
 						color="body"
 						progress={{ color: "warning", value: 100 }}
 						title="Total Staff"
-						value="131"
+						value={totalTeachers ? totalTeachers : "0"}
 					/>
+				</CCol>
+			</CRow>
+			<CRow>
+				<CCol>
+					<CohortExamPerformanceChart />
+				</CCol>
+				<CCol>
+					<DailyAttendanceChart />
 				</CCol>
 			</CRow>
 		</>

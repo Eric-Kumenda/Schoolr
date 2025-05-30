@@ -5,7 +5,7 @@ export const billCohort = createAsyncThunk(
     'finance/billCohort',
     async ({ cohortId, billingData }, { rejectWithValue }) => {
         try {
-            const response = await axios.post(`/api/finance/cohorts/${cohortId}/bill`, billingData);
+            const response = await axios.post(`/finance/cohorts/${cohortId}/bill`, billingData);
             return response.data; // Expecting { message, billings }
         } catch (error) {
             return rejectWithValue(error.response?.data || 'Failed to bill cohort.');
@@ -17,7 +17,7 @@ export const billStudent = createAsyncThunk(
     'finance/billStudent',
     async ({ studentId, billingData }, { rejectWithValue }) => {
         try {
-            const response = await axios.post(`/api/finance/students/${studentId}/bill`, billingData);
+            const response = await axios.post(`/finance/students/${studentId}/bill`, billingData);
             return response.data; // Expecting { message, billing }
         } catch (error) {
             return rejectWithValue(error.response?.data || 'Failed to bill student.');
@@ -29,7 +29,7 @@ export const getStudentBalance = createAsyncThunk(
     'finance/getStudentBalance',
     async (studentId, { rejectWithValue }) => {
         try {
-            const response = await axios.get(`/api/finance/students/${studentId}/balance`);
+            const response = await axios.get(`/finance/students/${studentId}/balance`);
             return response.data; // Expecting { studentId, admNo, accountBalance }
         } catch (error) {
             return rejectWithValue(error.response?.data || 'Failed to fetch student balance.');
@@ -41,7 +41,7 @@ export const getStudentTransactions = createAsyncThunk(
     'finance/getStudentTransactions',
     async (studentId, { rejectWithValue }) => {
         try {
-            const response = await axios.get(`/api/finance/students/${studentId}/transactions`);
+            const response = await axios.get(`/finance/students/${studentId}/transactions`);
             return response.data; // Expecting an array of transactions
         } catch (error) {
             return rejectWithValue(error.response?.data || 'Failed to fetch student transactions.');
@@ -67,7 +67,7 @@ export const initiateMpesaPayment = createAsyncThunk(
     'finance/initiateMpesaPayment',
     async ({ studentId, paymentData }, { rejectWithValue }) => {
         try {
-            const response = await axios.post(`/api/finance/students/${studentId}/pay/mpesa`, paymentData);
+            const response = await axios.post(`/finance/students/${studentId}/pay/mpesa`, paymentData);
             return response.data; // Expecting MPesa initiation response
         } catch (error) {
             return rejectWithValue(error.response?.data || 'Failed to initiate MPesa payment.');
@@ -79,7 +79,7 @@ export const createStripePaymentIntent = createAsyncThunk(
     'finance/createStripePaymentIntent',
     async ({ studentId, paymentData }, { rejectWithValue }) => {
         try {
-            const response = await axios.post(`/api/finance/students/${studentId}/pay/stripe`, paymentData);
+            const response = await axios.post(`/finance/students/${studentId}/pay/stripe`, paymentData);
             return response.data; // Expecting { clientSecret }
         } catch (error) {
             return rejectWithValue(error.response?.data || 'Failed to create Stripe Payment Intent.');
@@ -91,7 +91,7 @@ export const finalizeStripePayment = createAsyncThunk(
     'finance/finalizeStripePayment',
     async (paymentIntentId, { rejectWithValue }) => {
         try {
-            const response = await axios.post('/api/finance/stripe/payment/success', { paymentIntentId });
+            const response = await axios.post('/finance/stripe/payment/success', { paymentIntentId });
             return response.data; // Expecting success message
         } catch (error) {
             return rejectWithValue(error.response?.data || 'Failed to finalize Stripe payment.');
@@ -100,7 +100,7 @@ export const finalizeStripePayment = createAsyncThunk(
 );*/
 
 const financeSlice = createSlice({
-    name: 'school',
+    name: 'finance',
     initialState: {
         billingLoading: 'idle',
         billingError: null,

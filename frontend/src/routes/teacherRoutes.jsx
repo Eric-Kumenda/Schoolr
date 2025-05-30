@@ -14,8 +14,10 @@ const Classes = React.lazy(() => import("../views/students/Classes"));
 const StudentProfile = React.lazy(() =>
 	import("../views/students/StudentProfile")
 );
-const TakeAttendance = React.lazy(() => import("../views/attendance/TakeAttendance"));
-const ViewStudentAttendanceSummary = React.lazy(() => import("../views/attendance/ViewStudentAttendanceSummary"));
+const StudentList = React.lazy(() => import("../views/students/StudentList"));
+const TakeAttendance = React.lazy(() =>
+	import("../views/attendance/TakeAttendance")
+);
 const Chat = React.lazy(() => import("../views/pages/Chat/Chat"));
 const NotFound = React.lazy(() => import("../views/pages/page404/Page404"));
 
@@ -50,35 +52,30 @@ const teacherRoutes = [
 		exact: true,
 		name: "School Profile",
 		element: Streams,
-		
 	},
 	{
 		path: "/school/profile",
 		exact: true,
 		name: "Students",
 		element: Streams,
-		
 	},
 	{
 		path: "/students",
 		exact: true,
 		name: "Students",
 		element: Streams,
-		
 	},
 	{
-		path: "/students/streams",
+		path: "/students/list",
 		exact: true,
-		name: "Streams",
-		element: Streams,
-		
+		name: "Students List",
+		element: StudentList,
 	},
 	{
 		path: "/students/classes",
 		exact: true,
 		name: "Classes",
 		element: Classes,
-		
 	},
 	{
 		path: "/students/profile",
@@ -93,17 +90,10 @@ const teacherRoutes = [
 		element: TakeAttendance,
 	},
 	{
-		path: "/students/:studentId/attendance",
-		exact: true,
-		name: "Student Attendance",
-		element: ViewStudentAttendanceSummary,
-	},
-	{
 		path: "/chat",
 		exact: true,
 		name: "Messages",
 		element: Chat,
-		
 	},
 
 	{
@@ -111,6 +101,7 @@ const teacherRoutes = [
 		element: NotFound,
 		name: "Page Not Found",
 	},
+
 ];
 
 export default teacherRoutes;

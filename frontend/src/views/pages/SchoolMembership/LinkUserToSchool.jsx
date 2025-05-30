@@ -27,6 +27,7 @@ const LinkUserToSchool = () => {
 	);
 
 	const [email, setEmail] = useState("");
+	const [adm, setAdm] = useState("");
 	const [role, setRole] = useState("");
 	const [isVerified, setIsVerified] = useState(false);
 
@@ -43,7 +44,7 @@ const LinkUserToSchool = () => {
 		}
 
 		const resultAction = await dispatch(
-			linkUserToSchool({ email, role, isVerified })
+			linkUserToSchool({ email, role, isVerified, adm })
 		);
 
 		if (linkUserToSchool.fulfilled.match(resultAction)) {
@@ -139,6 +140,23 @@ const LinkUserToSchool = () => {
 									/>
 								</CCol>
 							</CRow>
+
+							{role === "student" ? (
+								<CRow className="mb-3">
+									<CCol xs={12}>
+										<CFormInput
+											type="text"
+											label="Student Admission Number"
+											placeholder="eg. 14311"
+											value={adm}
+											onChange={(e) =>
+												setAdm(e.target.value)
+											}
+											required
+										/>
+									</CCol>
+								</CRow>
+							) : null}
 
 							<CRow className="mb-3">
 								<CCol xs={12}>

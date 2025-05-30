@@ -90,6 +90,7 @@ exports.login = async (req, res) => {
 				last_name: user.last_name,
 				role: user.role,
 				schoolId: user.schoolId,
+				studentId: user.role === "student" ? user.studentId : null,
 			},
 		});
 	} catch (err) {
@@ -129,6 +130,7 @@ exports.refresh = async (req, res) => {
 				email: user.email,
 				role: user.role,
 				schoolId: user.schoolId,
+				studentId: user.role === "student" ? user.studentId : null,
 			},
 		});
 	} catch (err) {
@@ -249,6 +251,7 @@ exports.googleLogin = async (req, res) => {
 				lname: user.last_name,
 				role: user.role,
 				schoolId: user.schoolId,
+				studentId: user.role === "student" ? user.studentId : null,
 			},
 		});
 	} catch (err) {

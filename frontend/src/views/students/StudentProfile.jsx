@@ -1,10 +1,14 @@
 import { CAvatar, CButton, CForm, CFormInput, CSpinner } from "@coreui/react";
 import React, { useEffect, useState } from "react";
-import avatar4 from "./../../assets/images/avatars/4.jpg";
+import avatar from "./../../assets/images/avatars/avatar.png";
 import { useDispatch, useSelector } from "react-redux";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { updateSchoolStudent } from "../../store/schoolSlice";
 import { addToast } from "../../store/toastSlice";
+import ViewStudentAttendanceSummary from '../attendance/ViewStudentAttendanceSummary'
+import ViewStudentResults from "../exams/ViewStudentResults";
+import BalanceAndTransactions from "../finance/BalanceAndTransactions";
+
 
 const StudentProfile = ({ isModal }) => {
 	const dispatch = useDispatch();
@@ -12,6 +16,7 @@ const StudentProfile = ({ isModal }) => {
 	const selectedStudent = useSelector(
 		(state) => state.school.selectedStudent
 	);
+	const { role } = useSelector((state) => state.auth);
 	const [studentData, setStudentData] = useState(null);
 	const [isEditing, setIsEditing] = useState(false);
 	useEffect(() => {
@@ -78,11 +83,15 @@ const StudentProfile = ({ isModal }) => {
 	if (studentData) {
 		return (
 			<div className="container-fluid">
-				{isEditing && !isModal && (
+				{isEditing && !isModal && role === "admin" && (
 					<div className="row mb-3 position-fixed fixed-bottom bg-body w-100">
 						<div className="col d-flex justify-content-end me-md-5">
 							<CButton
-								color={studentData===selectedStudent?'secondary':'primary'}
+								color={
+									studentData === selectedStudent
+										? "secondary"
+										: "primary"
+								}
 								className="me-2"
 								onClick={handleSaveClick}>
 								Save Changes
@@ -98,9 +107,8 @@ const StudentProfile = ({ isModal }) => {
 				<div className="row mb-4 border shadow rounded ps-5 py-3">
 					<div className="col col-auto d-flex justify-content-center">
 						<CAvatar
-							src={avatar4}
-							size="md"
-							className="w-100 h-100"
+							src={avatar}
+							size="lg"
 						/>
 					</div>
 					<div className="col ps-3">
@@ -125,7 +133,7 @@ const StudentProfile = ({ isModal }) => {
 				<div className="row mb-4 border shadow rounded py-3">
 					<div className="col">
 						<div className="row mb-3">
-							{!isEditing || isModal ? (
+							{(!isEditing || isModal) && role === "admin" ? (
 								<div className="col col-12 d-flex align-items-start justify-content-end">
 									<button
 										className="btn rounded btn-outline-secondary w-auto"
@@ -157,7 +165,11 @@ const StudentProfile = ({ isModal }) => {
 									label="Surname"
 									placeholder="Surname"
 									value={studentData.surname || ""}
-									disabled={isModal || !isEditing}
+									disabled={
+										isModal ||
+										!isEditing ||
+										role !== "admin"
+									}
 									onChange={handleInputChange}
 								/>
 							</div>
@@ -168,7 +180,11 @@ const StudentProfile = ({ isModal }) => {
 									label="First Name"
 									placeholder="First Name"
 									value={studentData.first_name || ""}
-									disabled={isModal || !isEditing}
+									disabled={
+										isModal ||
+										!isEditing ||
+										role !== "admin"
+									}
 									onChange={handleInputChange}
 								/>
 							</div>
@@ -179,7 +195,11 @@ const StudentProfile = ({ isModal }) => {
 									label="Middle Name"
 									placeholder="Middle Name"
 									value={studentData.middle_name || ""}
-									disabled={isModal || !isEditing}
+									disabled={
+										isModal ||
+										!isEditing ||
+										role !== "admin"
+									}
 									onChange={handleInputChange}
 								/>
 							</div>
@@ -191,7 +211,11 @@ const StudentProfile = ({ isModal }) => {
 									label="Birth Certificate No"
 									placeholder="Birth Certificate No"
 									value={studentData.birth_cert_no || ""}
-									disabled={isModal || !isEditing}
+									disabled={
+										isModal ||
+										!isEditing ||
+										role !== "admin"
+									}
 									onChange={handleInputChange}
 								/>
 							</div>
@@ -205,7 +229,11 @@ const StudentProfile = ({ isModal }) => {
 											? studentData.DOB.substring(0, 10)
 											: ""
 									}
-									disabled={isModal || !isEditing}
+									disabled={
+										isModal ||
+										!isEditing ||
+										role !== "admin"
+									}
 									onChange={handleInputChange}
 								/>
 							</div>
@@ -217,7 +245,7 @@ const StudentProfile = ({ isModal }) => {
 				<div className="row mb-4 border shadow rounded py-3">
 					<div className="col">
 						<div className="row mb-3">
-							{!isEditing || isModal ? (
+							{(!isEditing || isModal) && role === "admin" ? (
 								<div className="col col-12 d-flex align-items-start justify-content-end">
 									<button
 										className="btn rounded btn-outline-secondary w-auto"
@@ -250,7 +278,11 @@ const StudentProfile = ({ isModal }) => {
 									label="Surname"
 									placeholder="Surname"
 									value={studentData.parent1_surname || ""} // Assuming this field exists
-									disabled={isModal || !isEditing}
+									disabled={
+										isModal ||
+										!isEditing ||
+										role !== "admin"
+									}
 									onChange={handleInputChange}
 								/>
 							</div>
@@ -260,6 +292,9 @@ const StudentProfile = ({ isModal }) => {
 				</div>
 
 				{/* Parent / Guardian 2 Information - implement similarly */}
+				<ViewStudentAttendanceSummary studentId={studentData._id}/>
+				<ViewStudentResults studentId={studentData._id} />
+				{/* <BalanceAndTransactions studentId={studentData._id} /> */}
 			</div>
 		);
 	} else if (selectedStudent) {

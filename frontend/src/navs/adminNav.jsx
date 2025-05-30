@@ -98,45 +98,13 @@ const adminNav = [
 	},
 	{
 		component: CNavGroup,
-		name: "Attendance",
-		icon: <i className="fa-regular fa-clipboard-list-check nav-icon"></i>,
-		items: [
-			{
-				component: CNavItem,
-				name: "Alerts",
-				to: "/notifications/alerts",
-			},
-			{
-				component: CNavItem,
-				name: "Badges",
-				to: "/notifications/badges",
-			},
-			{
-				component: CNavItem,
-				name: "Modal",
-				to: "/notifications/modals",
-			},
-			{
-				component: CNavItem,
-				name: "Toasts",
-				to: "/notifications/toasts",
-			},
-		],
-	},
-	{
-		component: CNavGroup,
 		name: "Admission",
 		icon: <i className="fa-solid fa-user-plus nav-icon"></i>,
 		items: [
 			{
 				component: CNavItem,
 				name: "New Student",
-				to: "/admission/new",
-			},
-			{
-				component: CNavItem,
-				name: "Current Student",
-				to: "/admission/current",
+				to: "/admin/admission/new",
 			},
 			{
 				component: CNavItem,
@@ -153,22 +121,22 @@ const adminNav = [
 			{
 				component: CNavItem,
 				name: "Officers",
-				to: "/finance/officers",
+				to: "/admin/finance/officers",
 			},
 			{
 				component: CNavItem,
 				name: "Balances",
-				to: "/finance/balances",
+				to: "/admin/finance/balances",
 			},
 			{
 				component: CNavItem,
 				name: "Expenditure",
-				to: "/finance/expenditure",
+				to: "/admin/finance/expenditure",
 			},
 			{
 				component: CNavItem,
 				name: "Claims",
-				to: "/finance/claims",
+				to: "/admin/finance/claims",
 			},
 		],
 	},

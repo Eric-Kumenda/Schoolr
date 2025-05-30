@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
 	CButton,
 	CCard,
@@ -11,7 +11,9 @@ import {
 	CRow,
 } from "@coreui/react";
 import { useDispatch, useSelector } from "react-redux";
-import { billCohort, billStudent } from "../../store/schoolSlice"; // Adjust path
+import { billCohort, billStudent } from "../../store/financeSlice"; // Adjust path
+import { fetchSchoolStudents } from "../../store/schoolSlice";
+import { addToast } from "../../store/toastSlice";
 
 const AdminBilling = () => {
 	const dispatch = useDispatch();
@@ -24,50 +26,122 @@ const AdminBilling = () => {
 	const { billingLoading, billingError } = useSelector(
 		(state) => state.school
 	);
-	const studentsData = useSelector((state) => state.school.studentsData); // Assuming you have this
+
+	const schoolId = useSelector((state) => state.auth.schoolId);
+	useEffect(() => {
+		if (schoolId) {
+			dispatch(fetchSchoolStudents(schoolId));
+		}
+	}, [dispatch, schoolId]);
+	const studentsData = useSelector((state) => state.school.studentsData);
 
 	const cohorts = studentsData
-		? [...new Set(studentsData.map((c) => c.cohort))].map((cohort) => ({
-				value: cohort,
-				label: `Form ${cohort}`,
+		? [
+				...new Set(
+					studentsData
+						.map((s) => s.current_study_year)
+						.filter(Boolean)
+				),
+		  ].map((current_study_year) => ({
+				value: current_study_year,
+				label: `Form ${current_study_year}`,
 		  }))
 		: [];
-	const allStudents = studentsData
-		? studentsData.reduce((acc, cohort) => [...acc, ...cohort.students], [])
-		: [];
+	const allStudents = studentsData || [];
 	const studentOptions = allStudents.map((student) => ({
 		value: student._id,
 		label: `${student.first_name} ${student.surname} (${student.adm_no})`,
 	}));
 
-	const handleBill = () => {
-		if (billType === "cohort" && cohortId && description && amount) {
-			dispatch(
-				billCohort({
-					cohortId,
-					billingData: { description, amount, dueDate },
-				})
-			);
+	const handleBill = async () => {
+		if (
+			billType === "cohort" &&
+			cohortId &&
+			description &&
+			amount &&
+			amount > 0
+		) {
+			try {
+				const result = await dispatch(
+					billCohort({
+						cohortId,
+						billingData: { description, amount, dueDate },
+					})
+				);
+				if (result?.payload?.status === "success") {
+					dispatch(
+						addToast({
+							id: Date.now(),
+							message: "Billing Successful",
+							title: "Success",
+							color: "#28a745",
+							timestamp: Date.now(),
+						})
+					);
+				}
+			} catch (error) {
+				dispatch(
+					addToast({
+						id: Date.now(),
+						message: error,
+						title: "Error",
+						color: "#e55353",
+						timestamp: Date.now(),
+					})
+				);
+			}
 		} else if (
 			billType === "student" &&
 			studentId &&
 			description &&
-			amount
+			amount &&
+			amount > 0
 		) {
+			try {
+				const result = await dispatch(
+					billStudent({
+						studentId,
+						billingData: { description, amount, dueDate },
+					})
+				);
+				if (result?.payload?.status === "success") {
+					dispatch(
+						addToast({
+							id: Date.now(),
+							message: "Billing Successful",
+							title: "Success",
+							color: "#28a745",
+							timestamp: Date.now(),
+						})
+					);
+				}
+			} catch (error) {
+				dispatch(
+					addToast({
+						id: Date.now(),
+						message: error,
+						title: "Error",
+						color: "#e55353",
+						timestamp: Date.now(),
+					})
+				);
+			}
+		} else {
 			dispatch(
-				billStudent({
-					studentId,
-					billingData: { description, amount, dueDate },
+				addToast({
+					id: Date.now(),
+					message: "Please fill in all required fields.",
+					title: "Error",
+					color: "#e55353",
+					timestamp: Date.now(),
 				})
 			);
-		} else {
-			alert("Please fill in all required fields.");
 		}
 	};
 
 	return (
 		<CRow>
-			<CCol md={6}>
+			<CCol>
 				<CCard>
 					<CCardHeader>
 						<strong>Create Billing</strong>
@@ -100,7 +174,7 @@ const AdminBilling = () => {
 								<CRow className="mb-3">
 									<CCol md={6}>
 										<CFormSelect
-											label="Select Cohort"
+											label="Select Form"
 											options={[
 												{
 													value: "",
@@ -159,6 +233,7 @@ const AdminBilling = () => {
 										type="number"
 										label="Amount"
 										value={amount}
+										min={1}
 										onChange={(e) =>
 											setAmount(e.target.value)
 										}

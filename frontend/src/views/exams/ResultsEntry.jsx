@@ -187,7 +187,7 @@ const ResultsEntry = () => {
 
 	return (
 		<CRow>
-			<CCol xs={12}>
+			<CCol>
 				<CCard>
 					<CCardHeader>
 						<strong>

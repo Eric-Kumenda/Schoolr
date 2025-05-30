@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { CAvatar, CButton, CFormInput, CSpinner } from "@coreui/react";
-import avatar4 from "../../assets/images/avatars/4.jpg";
+import avatar from "../../assets/images/avatars/avatar.png";
 import { useDispatch, useSelector } from "react-redux";
 import { addToast } from "../../store/toastSlice";
 import { updateSchoolTeacher } from "../../store/schoolSlice"; // Implement this action
@@ -67,7 +67,7 @@ const TeacherProfile = ({ isModal }) => {
 		<div className="container-fluid">
 			<div className="row mb-4 border shadow rounded ps-5 py-3">
 				<div className="col col-auto d-flex justify-content-center">
-					<CAvatar src={avatar4} size="md" className="w-100 h-100" />
+					<CAvatar src={avatar} size="lg" />
 				</div>
 				<div className="col ps-3">
 					<p className="fw-bold fs-4 mb-1">

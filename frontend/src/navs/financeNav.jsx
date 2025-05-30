@@ -82,7 +82,7 @@ const financeNav = [
 			},
 			{
 				component: CNavItem,
-				name: "Expenditure",
+				name: "Billings",
 				to: "/finance/expenditure",
 			},
 			{
@@ -92,45 +92,12 @@ const financeNav = [
 			},
 		],
 	},
-	{
-		component: CNavGroup,
-		name: "Boarding",
-		icon: <i className="fa-regular fa-building-user nav-icon"></i>,
-		items: [
-			{
-				component: CNavItem,
-				name: "Houses",
-				to: "/boarding/houses",
-			},
-			{
-				component: CNavItem,
-				name: "Dorms",
-				to: "/boarding/dorms",
-			},
-			{
-				component: CNavItem,
-				name: "Patrons",
-				to: "/boarding/patrons",
-			},
-			{
-				component: CNavItem,
-				name: "Prefects",
-				to: "/boarding/prefects",
-			},
-		],
-	},
 	
 	{
 		component: CNavItem,
 		name: "Settings",
 		to: "/finance/settings",
 		icon: <i className="fa-regular fa-gear nav-icon"></i>,
-	},
-	{
-		component: CNavItem,
-		name: "Login",
-		to: '/loginStudent',
-		icon: <i className="fa-regular fa-user-unlock nav-icon"></i>,
 	},
 ];
 

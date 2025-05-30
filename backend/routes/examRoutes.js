@@ -20,5 +20,13 @@ router.get('/students/:studentId/exam-results', requireAuth, examController.getS
 
 // Admin/Teacher/SuperAdmin: Get all results for a particular exam
 router.get('/:examId/all-results', requireTeacher, examController.getExamResultsByExamId); // Teachers and Admins can see
+router.get('/cohort-performance', requireTeacher, examController.getCohortExamPerformance);
+
+// Route to get a list of exams for dropdowns
+router.get('/list-for-dropdown', requireAuth, examController.getExamsListForDropdown);
+
+// Route to get a student's results for a specific exam
+router.get('/student/:studentId/results/:examId', requireAuth, examController.getStudentExamResultsForExam);
+
 
 module.exports = router

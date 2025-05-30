@@ -17,5 +17,6 @@ router.get('/monthly-summary', requireAdmin, attendanceController.getMonthlyAtte
 // General authenticated user route (Student, Parent, Teacher, Admin) for individual student summary
 // Using canViewStudentResults middleware as it checks for parent/student/teacher/admin viewing permissions
 router.get('/students/:studentId/attendance-summary', requireAuth, attendanceController.getStudentAttendanceSummary);
+router.get('/daily-percentage', requireTeacher, attendanceController.getDailyAttendancePercentage);
 
 module.exports = router;

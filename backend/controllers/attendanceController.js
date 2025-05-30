@@ -1,4 +1,6 @@
-const { Student, AttendanceRecord, } = require('../models/newSchoolModel'); // Adjust path to your models
+const { default: mongoose } = require('mongoose');
+const { Student, AttendanceRecord, School, } = require('../models/newSchoolModel'); // Adjust path to your models
+const moment = require('moment/moment');
 
 // Helper to get current academic year and term based on date
 // You'll need to define how your school terms are determined (e.g., config, fixed dates)
@@ -19,7 +21,7 @@ const getCurrentAcademicContext = (date = new Date()) => {
 exports.getStudentsForAttendance = async (req, res) => {
     try {
         const { attendanceDate, cohort, stream } = req.query;
-        const schoolId = req.user.schoolId;
+        const schoolId = req.user.schoolObjectId;
 
         if (!schoolId) {
             return res.status(400).json({ message: "School ID not found for authenticated user." });
@@ -83,7 +85,7 @@ exports.getStudentsForAttendance = async (req, res) => {
 exports.recordBatchAttendance = async (req, res) => {
     try {
         const { attendanceDate, attendanceData } = req.body; // attendanceData is an array
-        const schoolId = req.user.schoolId;
+        const schoolId = req.user.schoolObjectId;
         const recordedBy = req.user._id;
 
         if (!schoolId) {
@@ -130,7 +132,7 @@ exports.recordBatchAttendance = async (req, res) => {
         const studentIdsToUpdate = [...new Set(attendanceData.map(d => d.studentId))];
         const studentsToUpdate = await Student.find({ _id: { $in: studentIdsToUpdate }, schoolId });
 
-        for (const student of studentsToUpdate) {
+        /*for (const student of studentsToUpdate) {
             const records = await AttendanceRecord.find({ studentId: student._id });
             let totalPresent = 0;
             let totalAbsent = 0;
@@ -152,7 +154,7 @@ exports.recordBatchAttendance = async (req, res) => {
                 lastAttendanceUpdate: Date.now(),
             };
             await student.save();
-        }
+        }*/
 
         res.status(200).json({
             message: "Attendance recorded/updated successfully.",
@@ -170,7 +172,7 @@ exports.recordBatchAttendance = async (req, res) => {
 exports.getDailyAttendanceOverview = async (req, res) => {
     try {
         const { attendanceDate, cohort, stream } = req.query;
-        const schoolId = req.user.schoolId;
+        const schoolId = req.user.schoolObjectId;
 
         if (!schoolId) {
             return res.status(400).json({ message: "School ID not found for authenticated user." });
@@ -274,29 +276,29 @@ exports.getMonthlyAttendanceSummary = async (req, res) => {
 // 5. Get Student Attendance Summary (For Student Profile / Parent View)
 exports.getStudentAttendanceSummary = async (req, res) => {
     try {
-        const { studentId } = req.params; // Student ID
-        const schoolId = req.user.schoolId;
+        const { studentId } = req.params;
+        const schoolId = req.user.schoolObjectId;
         const userRole = req.user.role;
-        const userId = req.user._id; // Mongoose ObjectId of the User document
+        const userId = req.user.id;
 
         if (!schoolId) {
             return res.status(400).json({ message: "School ID not found for authenticated user." });
         }
 
         let student;
-        // Authorization check (similar to exam results)
-        if (userRole === 'parent') {
+        /*if (userRole === 'parent') {
             const parent = await Parent.findOne({ userId: req.user.id, studentIds: studentId });
             if (!parent) {
                 return res.status(403).json({ message: "Not authorized to view this student's attendance." });
             }
             student = await Student.findOne({_id: studentId, schoolId});
-        } else if (userRole === 'student') {
-            student = await Student.findOne({ _id: userId, schoolId });
+        } else*/
+         if (userRole === 'student' || userRole === 'parent') {
+            student = await Student.findOne({ _id: studentId, schoolId });
             if (!student || student._id.toString() !== studentId) {
                  return res.status(403).json({ message: "Not authorized to view these attendance records." });
             }
-        } else if (userRole === 'teacher' || userRole === 'school_admin' || userRole === 'super_admin') {
+        } else if (userRole === 'teacher' || userRole === 'admin') {
             student = await Student.findOne({_id: studentId, schoolId});
             if (!student) {
                 return res.status(404).json({ message: "Student not found in this school." });
@@ -309,16 +311,148 @@ exports.getStudentAttendanceSummary = async (req, res) => {
             return res.status(404).json({ message: "Student not found." });
         }
 
-        // Return the summary directly from the Student document
+        // --- NEW LOGIC: Calculate summary using aggregation ---
+        const attendanceSummary = await AttendanceRecord.aggregate([
+            {
+                $match: {
+                    schoolId: new mongoose.Types.ObjectId(schoolId),
+                    studentId: new mongoose.Types.ObjectId(studentId),
+                },
+            },
+            {
+                $group: {
+                    _id: '$status', // Group by status
+                    count: { $sum: 1 }, // Count occurrences of each status
+                },
+            },
+        ]);
+
+        const formattedSummary = {
+            totalDaysPresent: 0,
+            totalDaysAbsent: 0,
+            totalDaysLate: 0,
+            totalDaysExcused: 0,
+            lastAttendanceUpdate: null, // We'll try to find the last record date
+        };
+
+        attendanceSummary.forEach(item => {
+            if (item._id === 'Present') formattedSummary.totalDaysPresent = item.count;
+            else if (item._id === 'Absent') formattedSummary.totalDaysAbsent = item.count;
+            else if (item._id === 'Late') formattedSummary.totalDaysLate = item.count;
+            else if (item._id === 'Excused') formattedSummary.totalDaysExcused = item.count;
+        });
+
+        // Find the last attendance record date for this student
+        const latestRecord = await AttendanceRecord.findOne({
+            schoolId: new mongoose.Types.ObjectId(schoolId),
+            studentId: new mongoose.Types.ObjectId(studentId),
+        }).sort({ attendanceDate: -1, createdAt: -1 }).select('attendanceDate');
+
+        if (latestRecord) {
+            formattedSummary.lastAttendanceUpdate = latestRecord.attendanceDate;
+        }
+
         res.status(200).json({
             studentId: student._id,
             adm_no: student.adm_no,
             name: `${student.first_name} ${student.surname}`,
-            summary: student.attendanceSummary,
+            summary: formattedSummary,
         });
 
     } catch (error) {
         console.error("Error fetching student attendance summary:", error);
         res.status(500).json({ message: "Failed to fetch student attendance summary.", error: error.message });
+    }
+};
+
+
+exports.getDailyAttendancePercentage = async (req, res) => {
+    try {
+        const schoolId = req.user.schoolObjectId; // schoolId from auth middleware
+
+        if (!schoolId) {
+            return res.status(400).json({ message: "School ID not found for authenticated user." });
+        }
+
+        // Calculate the date 12 days ago from today (or the most recent record if data is sparse)
+        const twelveDaysAgo = moment().subtract(12, 'days').startOf('day').toDate();
+
+        const data = await AttendanceRecord.aggregate([
+            {
+                $match: {
+                    schoolId: new mongoose.Types.ObjectId(schoolId),
+                    // Only consider records from the last 12 days
+                    // We will fetch more than 12 days and then sort and limit to get the *most recent* 12 distinct dates
+                    attendanceDate: { $gte: twelveDaysAgo }
+                }
+            },
+            // Step 1: Group by attendanceDate and status to count students
+            {
+                $group: {
+                    _id: {
+                        attendanceDate: "$attendanceDate",
+                        status: "$status"
+                    },
+                    count: { $sum: 1 }
+                }
+            },
+            // Step 2: Group by attendanceDate to pivot statuses and calculate total students
+            {
+                $group: {
+                    _id: "$_id.attendanceDate",
+                    totalStudents: { $sum: "$count" },
+                    presentStudents: {
+                        $sum: {
+                            $cond: [{ $eq: ["$_id.status", "Present"] }, "$count", 0]
+                        }
+                    }
+                }
+            },
+            // Step 3: Project to calculate the present percentage
+            {
+                $project: {
+                    _id: 0, // Exclude the default _id
+                    attendanceDate: "$_id",
+                    totalStudents: 1,
+                    presentStudents: 1,
+                    presentPercentage: {
+                        $cond: {
+                            if: { $gt: ["$totalStudents", 0] },
+                            then: { $round: [{ $multiply: [{ $divide: ["$presentStudents", "$totalStudents"] }, 100] }, 2] },
+                            else: 0
+                        }
+                    }
+                }
+            },
+            // Step 4: Sort by attendanceDate descending to get most recent first
+            {
+                $sort: {
+                    attendanceDate: -1 // Sort descending to easily pick the most recent 12
+                }
+            },
+            // Step 5: Limit to the most recent 12 unique days
+            {
+                $limit: 12
+            },
+            // Step 6: Sort ascending again for the chart's x-axis
+            {
+                $sort: {
+                    attendanceDate: 1
+                }
+            }
+        ]);
+
+        // Format dates and percentages for the frontend chart
+        const dateLabels = data.map(item => moment(item.attendanceDate).format('YYYY-MM-DD'));
+        const presentPercentages = data.map(item => item.presentPercentage);
+
+        res.status(200).json({
+            dateLabels,
+            presentPercentages
+        });
+
+    } catch (error) {
+        console.error("Error fetching daily attendance percentage:", error);
+        res.status(500).json({ message: "Failed to fetch daily attendance percentage.", error: error.message });
     }
 };

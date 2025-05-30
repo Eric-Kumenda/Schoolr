@@ -9,15 +9,6 @@ const AdminDashboard = React.lazy(() =>
 const RecordPayment = React.lazy(() =>
 	import("../views/finance/RecordPayment")
 );
-const CreateSchool = React.lazy(() =>
-	import("../views/pages/SchoolMembership/CreateSchool")
-);
-const UploadStudents = React.lazy(() =>
-	import("../views/pages/SchoolMembership/UploadStudents")
-);
-const UploadTeachers = React.lazy(() =>
-	import("../views/pages/SchoolMembership/UploadTeachers")
-);
 const ParentDashboard = React.lazy(() =>
 	import("../components/Dashboard/ParentDashboard")
 );
@@ -54,6 +45,32 @@ const financeRoutes = [
 		exact: true,
 		name: "Record Payments",
 		element: RecordPayment,
+	},
+
+	{
+		path: "/students/list",
+		exact: true,
+		name: "Students List",
+		element: StudentList,
+	},
+	{
+		path: "/students/classes",
+		exact: true,
+		name: "Classes",
+		element: Classes,
+	},
+	{
+		path: "/students/profile",
+		exact: true,
+		name: "Student Profile",
+		element: StudentProfile,
+	},
+
+	{
+		path: "/chat",
+		exact: true,
+		name: "Messages",
+		element: Chat,
 	},
 	{
 		path: "/*",

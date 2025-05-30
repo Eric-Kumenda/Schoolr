@@ -6,15 +6,19 @@ import { CCol, CRow, CWidgetStatsC } from "@coreui/react";
 
 import { useSelector, useDispatch } from "react-redux";
 import { fetchSchoolMetrics } from "../../store/schoolSlice";
+import CohortExamPerformanceChart from "../../views/exams/CohortExamPerformanceChart";
+import DailyAttendanceChart from "../../views/attendance/DailyAttendanceChart";
 
 const Dashboard = () => {
 	const dispatch = useDispatch();
 	const schoolId = useSelector((state) => state.auth.schoolId);
-	const {totalStudents, totalTeachers} = useSelector((state) => state.school.schoolMetrics);
+	const { totalStudents, totalTeachers } = useSelector(
+		(state) => state.school.schoolMetrics
+	);
 
-	useEffect(()=>{
-		dispatch(fetchSchoolMetrics(schoolId))
-	},[schoolId, dispatch])
+	useEffect(() => {
+		dispatch(fetchSchoolMetrics(schoolId));
+	}, [schoolId, dispatch]);
 
 	return (
 		<>
@@ -28,7 +32,7 @@ const Dashboard = () => {
 						color="body"
 						progress={{ color: "primary", value: 100 }}
 						title="Total Students"
-						value={totalStudents?totalStudents:'0'}
+						value={totalStudents ? totalStudents : "0"}
 					/>
 				</CCol>
 				<CCol xs={12} md={4}>
@@ -52,10 +56,13 @@ const Dashboard = () => {
 						color="body"
 						progress={{ color: "warning", value: 100 }}
 						title="Total Staff"
-						value={totalTeachers?totalTeachers:"0"}
+						value={totalTeachers ? totalTeachers : "0"}
 					/>
 				</CCol>
 			</CRow>
+
+			<CohortExamPerformanceChart />
+			<DailyAttendanceChart />
 		</>
 	);
 };

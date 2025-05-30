@@ -22,11 +22,12 @@ import {
 } from "@coreui/icons";
 import CIcon from "@coreui/icons-react";
 
-import avatar4 from "./../../assets/images/avatars/4.jpg";
+import avatar from "./../../assets/images/avatars/avatar.png";
 import { useDispatch, useSelector } from "react-redux";
 import { logout } from "../../store/authSlice";
 import socket from "../../socket";
 import { addToast } from "../../store/toastSlice";
+import { Link } from "react-router-dom";
 
 const AppHeaderDropdown = () => {
 	const dispatch = useDispatch();
@@ -55,7 +56,7 @@ const AppHeaderDropdown = () => {
 				caret={false}>
 				<div className="row gx-0">
 					<div className="col me-2">
-						<CAvatar src={avatar4} size="md" />
+						<CAvatar src={avatar} size="md" />
 					</div>
 					<div className="col me-2">
 						<p className="fw-bold m-0 p-0 fs-5">{firstName}</p>
@@ -72,58 +73,28 @@ const AppHeaderDropdown = () => {
 				<CDropdownHeader className="bg-body shadow-sm fw-semibold mb-2">
 					Account
 				</CDropdownHeader>
-				<CDropdownItem href="#">
+				<CDropdownItem as={Link}>
 					<CIcon icon={cilBell} className="me-2" />
 					Updates
-					<CBadge color="info" className="ms-2">
-						42
-					</CBadge>
+					<CBadge color="info" className="ms-2"></CBadge>
 				</CDropdownItem>
-				<CDropdownItem href="#">
+				<CDropdownItem as={Link} to={`/${userRole}/chat`}>
 					<CIcon icon={cilEnvelopeOpen} className="me-2" />
 					Messages
-					<CBadge color="success" className="ms-2">
-						42
-					</CBadge>
-				</CDropdownItem>
-				<CDropdownItem href="#">
-					<CIcon icon={cilTask} className="me-2" />
-					Tasks
-					<CBadge color="danger" className="ms-2">
-						42
-					</CBadge>
-				</CDropdownItem>
-				<CDropdownItem href="#">
-					<CIcon icon={cilCommentSquare} className="me-2" />
-					Comments
-					<CBadge color="warning" className="ms-2">
+					<CBadge color="info" className="ms-2">
 						42
 					</CBadge>
 				</CDropdownItem>
 				<CDropdownHeader className="bg-body shadow-sm fw-semibold my-2">
 					Settings
 				</CDropdownHeader>
-				<CDropdownItem href="#">
+				<CDropdownItem as={Link}>
 					<CIcon icon={cilUser} className="me-2" />
 					Profile
 				</CDropdownItem>
-				<CDropdownItem href="#">
+				<CDropdownItem as={Link}>
 					<CIcon icon={cilSettings} className="me-2" />
 					Settings
-				</CDropdownItem>
-				<CDropdownItem href="#">
-					<CIcon icon={cilCreditCard} className="me-2" />
-					Payments
-					<CBadge color="secondary" className="ms-2">
-						42
-					</CBadge>
-				</CDropdownItem>
-				<CDropdownItem href="#">
-					<CIcon icon={cilFile} className="me-2" />
-					Projects
-					<CBadge color="primary" className="ms-2">
-						42
-					</CBadge>
 				</CDropdownItem>
 				<CDropdownDivider />
 				<CDropdownItem onClick={handleLogout}>

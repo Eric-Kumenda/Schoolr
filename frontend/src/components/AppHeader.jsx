@@ -66,26 +66,15 @@ const AppHeader = ({ routes }) => {
 					<CNavItem className="px-md-4">
 						<h5 className="mb-0">{schoolData&&schoolData.name} <span className="badge rounded px-2 ms-1" style={{backgroundColor: schoolData&&schoolData.color, color: 'transparent', userSelect: 'none'}}>{1}</span></h5>
 					</CNavItem>
-					{/* <CNavItem>
-						<CNavLink to="/dashboard" as={NavLink}>
-							Dashboard
-						</CNavLink>
-					</CNavItem>
-					<CNavItem>
-						<CNavLink href="#">Users</CNavLink>
-					</CNavItem>
-					<CNavItem>
-						<CNavLink href="#">Settings</CNavLink>
-					</CNavItem> */}
 				</CHeaderNav>
 				<CHeaderNav className="ms-auto">
 					<CNavItem>
-						<CNavLink href="#">
+						<CNavLink as={Link}>
 							<i className="fa-duotone fa-light fa-bell fs-5"></i>
 						</CNavLink>
 					</CNavItem>
-					<CNavItem>
-						<CNavLink href="#">
+					<CNavItem className="d-none">
+						<CNavLink as={Link}>
 							<CIcon icon={cilList} size="lg" />
 						</CNavLink>
 					</CNavItem>

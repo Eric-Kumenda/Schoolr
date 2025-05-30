@@ -22,7 +22,7 @@ import {
 	CButton,
 } from "@coreui/react";
 import { useSelector, useDispatch } from "react-redux";
-import avatar4 from "./../../assets/images/avatars/4.jpg"; // Placeholder avatar
+import avatar from "./../../assets/images/avatars/avatar.png"; // Placeholder avatar
 import {
 	fetchSchoolStudents,
 	setSelectedStudent,
@@ -104,7 +104,7 @@ const ClassList = () => {
 			return {
 				teacherName: "Mr./Ms. Placeholder Teacher",
 				teacherContact: "+254 7XXXXXXXXX",
-				teacherPhoto: avatar4,
+				teacherPhoto: avatar,
 				studentCount: filtered.length,
 				classRank: "N/A",
 				previousMeanScore: "N/A",

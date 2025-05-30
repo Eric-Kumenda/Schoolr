@@ -32,6 +32,37 @@ const initialState = {
 	studentAttendanceSummary: null, // Summary for a single student
 	attendanceLoading: "idle",
 	attendanceError: null,
+
+	cohortExamPerformance: null, // New state to store the chart data
+	cohortExamPerformanceLoading: "idle",
+	cohortExamPerformanceError: null,
+
+	dailyAttendancePercentage: null, // New state for attendance chart data
+	dailyAttendancePercentageLoading: "idle",
+	dailyAttendancePercentageError: null,
+
+	examsList: [], // New state to store list of exams for dropdown
+	examsListLoading: "idle",
+	examsListError: null,
+
+	studentExamResults: [], // New state to store student's results for selected exam
+	studentExamResultsLoading: "idle",
+	studentExamResultsError: null,
+	selectedExamId: null, // To keep track of the currently selected exam
+
+	studentFinanceDetails: {
+		// New state for student finance details
+		accountBalance: 0,
+		transactions: [],
+	},
+	studentFinanceDetailsLoading: "idle",
+	studentFinanceDetailsError: null,
+	schoolPaymentDetails: {}, // New state for school payment details
+	schoolPaymentDetailsLoading: "idle",
+	schoolPaymentDetailsError: null,
+
+	updateSchoolPaymentDetailsLoading: "idle", // New state for update operation loading
+	updateSchoolPaymentDetailsError: null,
 };
 
 export const fetchSchoolMetrics = createAsyncThunk(
@@ -304,7 +335,7 @@ export const getStudentExamResults = createAsyncThunk(
 			if (examId) params.append("examId", examId);
 
 			const response = await axios.get(
-				`/students/${studentId}/exam-results`,
+				`/exams/students/${studentId}/exam-results`,
 				{ params }
 			);
 			return response.data; // Expecting { studentResults: [] }
@@ -343,10 +374,9 @@ export const getStudentsForAttendance = createAsyncThunk(
 			if (cohort) params.append("cohort", cohort);
 			if (stream) params.append("stream", stream);
 
-			const response = await axios.get(
-				"/attendance/students-for-entry",
-				{ params }
-			);
+			const response = await axios.get("/attendance/students-for-entry", {
+				params,
+			});
 			return response.data; // Expecting { students: [] }
 		} catch (error) {
 			return rejectWithValue(
@@ -382,10 +412,9 @@ export const getMonthlyAttendanceSummary = createAsyncThunk(
 	async ({ year, month }, { rejectWithValue }) => {
 		try {
 			const params = new URLSearchParams({ year, month });
-			const response = await axios.get(
-				"/attendance/monthly-summary",
-				{ params }
-			);
+			const response = await axios.get("/attendance/monthly-summary", {
+				params,
+			});
 			return response.data; // Expecting { summary: [] }
 		} catch (error) {
 			return rejectWithValue(
@@ -402,7 +431,7 @@ export const getStudentAttendanceSummary = createAsyncThunk(
 	async (studentId, { rejectWithValue }) => {
 		try {
 			const response = await axios.get(
-				`/students/${studentId}/attendance-summary`
+				`/attendance/students/${studentId}/attendance-summary`
 			);
 			return response.data; // Expecting { studentId, adm_no, name, summary }
 		} catch (error) {
@@ -412,6 +441,111 @@ export const getStudentAttendanceSummary = createAsyncThunk(
 			);
 		}
 	}
+);
+
+// New Thunk for fetching cohort exam performance
+export const getCohortExamPerformance = createAsyncThunk(
+	"school/getCohortExamPerformance",
+	async (_, { rejectWithValue }) => {
+		try {
+			const response = await axios.get("/exams/cohort-performance"); // Adjust API endpoint path if different
+			return response.data;
+		} catch (error) {
+			return rejectWithValue(
+				error.response?.data?.message || error.message
+			);
+		}
+	}
+);
+
+// New Thunk for fetching daily attendance percentage
+export const getDailyAttendancePercentage = createAsyncThunk(
+	"school/getDailyAttendancePercentage",
+	async (_, { rejectWithValue }) => {
+		try {
+			const response = await axios.get("/attendance/daily-percentage"); // Adjust API endpoint path
+			return response.data;
+		} catch (error) {
+			return rejectWithValue(
+				error.response?.data?.message || error.message
+			);
+		}
+	}
+);
+
+// New Thunk for fetching list of exams for dropdown
+export const getExamsListForDropdown = createAsyncThunk(
+	"school/getExamsListForDropdown",
+	async (_, { rejectWithValue }) => {
+		try {
+			const response = await axios.get("/exams/list-for-dropdown"); // Adjust API endpoint path
+			return response.data;
+		} catch (error) {
+			return rejectWithValue(
+				error.response?.data?.message || error.message
+			);
+		}
+	}
+);
+
+// New Thunk for fetching student's exam results for a specific exam
+export const getStudentExamResultsForExam = createAsyncThunk(
+	"school/getStudentExamResultsForExam",
+	async ({ studentId, examId }, { rejectWithValue }) => {
+		try {
+			const response = await axios.get(
+				`/exams/student/${studentId}/results/${examId}`
+			); // Adjust API endpoint path
+			return response.data;
+		} catch (error) {
+			return rejectWithValue(
+				error.response?.data?.message || error.message
+			);
+		}
+	}
+);
+
+// New Thunk for fetching student's finance details
+export const getStudentFinanceDetails = createAsyncThunk(
+	"school/getStudentFinanceDetails",
+	async (studentId, { rejectWithValue }) => {
+		try {
+			const response = await axios.get(`/finance/${studentId}/finance`); // Adjust API endpoint path
+			return response.data;
+		} catch (error) {
+			return rejectWithValue(
+				error.response?.data?.message || error.message
+			);
+		}
+	}
+);
+
+// New Thunk for fetching school payment details
+export const getSchoolPaymentDetails = createAsyncThunk(
+	"school/getSchoolPaymentDetails",
+	async (_, { rejectWithValue }) => {
+		try {
+			const response = await axios.get("/school/payment-details"); // Adjust API endpoint path
+			return response.data;
+		} catch (error) {
+			return rejectWithValue(
+				error.response?.data?.message || error.message
+			);
+		}
+	}
+);
+
+// New Thunk for updating school payment details
+export const updateSchoolPaymentDetails = createAsyncThunk(
+    'school/updateSchoolPaymentDetails',
+    async ({ paymentDetails }, { rejectWithValue }) => {
+        try {
+            const response = await axios.put('/school/payment-details', { paymentDetails }); // Adjust API endpoint path
+            return response.data;
+        } catch (error) {
+            return rejectWithValue(error.response?.data?.message || error.message);
+        }
+    }
 );
 
 const schoolSlice = createSlice({
@@ -444,6 +578,50 @@ const schoolSlice = createSlice({
 			state.studentAttendanceSummary = null;
 			state.attendanceLoading = "idle";
 			state.attendanceError = null;
+		},
+
+		clearCohortExamPerformanceState: (state) => {
+			state.cohortExamPerformance = null;
+			state.cohortExamPerformanceLoading = "idle";
+			state.cohortExamPerformanceError = null;
+		},
+		clearDailyAttendancePercentageState: (state) => {
+			state.dailyAttendancePercentage = null;
+			state.dailyAttendancePercentageLoading = "idle";
+			state.dailyAttendancePercentageError = null;
+		},
+		clearExamsListState: (state) => {
+			state.examsList = [];
+			state.examsListLoading = "idle";
+			state.examsListError = null;
+		},
+		clearStudentExamResultsState: (state) => {
+			state.studentExamResults = [];
+			state.studentExamResultsLoading = "idle";
+			state.studentExamResultsError = null;
+			state.selectedExamId = null;
+		},
+		setSelectedExamId: (state, action) => {
+			// New reducer to set selected exam ID
+			state.selectedExamId = action.payload;
+		},
+		clearStudentFinanceDetailsState: (state) => {
+			state.studentFinanceDetails = {
+				accountBalance: 0,
+				transactions: [],
+			};
+			state.studentFinanceDetailsLoading = "idle";
+			state.studentFinanceDetailsError = null;
+		},
+		clearSchoolPaymentDetailsState: (state) => {
+			state.schoolPaymentDetails = {};
+			state.schoolPaymentDetailsLoading = "idle";
+			state.schoolPaymentDetailsError = null;
+		},
+		clearUpdateSchoolPaymentDetailsState: (state) => {
+			// New clear action for update status
+			state.updateSchoolPaymentDetailsLoading = "idle";
+			state.updateSchoolPaymentDetailsError = null;
 		},
 	},
 	extraReducers: (builder) => {
@@ -662,7 +840,7 @@ const schoolSlice = createSlice({
 			})
 			.addCase(getStudentExamResults.fulfilled, (state, action) => {
 				state.examsLoading = "succeeded";
-				state.studentExamResults = action.payload.studentResults;
+				state.studentExamResults = action.payload;
 			})
 			.addCase(getStudentExamResults.rejected, (state, action) => {
 				state.examsLoading = "failed";
@@ -737,7 +915,7 @@ const schoolSlice = createSlice({
 			}
 		);
 
-		// getStudentAttendanceSummary
+		// getStudentAttendanceSummary (no change needed here, as it just stores what API returns)
 		builder.addCase(getStudentAttendanceSummary.pending, (state) => {
 			state.attendanceLoading = "pending";
 			state.attendanceError = null;
@@ -756,6 +934,119 @@ const schoolSlice = createSlice({
 				state.attendanceError = action.payload;
 			}
 		);
+		// Reducers for getCohortExamPerformance
+		builder.addCase(getCohortExamPerformance.pending, (state) => {
+			state.cohortExamPerformanceLoading = "pending";
+			state.cohortExamPerformanceError = null;
+		});
+		builder.addCase(getCohortExamPerformance.fulfilled, (state, action) => {
+			state.cohortExamPerformanceLoading = "succeeded";
+			state.cohortExamPerformance = action.payload;
+		});
+		builder.addCase(getCohortExamPerformance.rejected, (state, action) => {
+			state.cohortExamPerformanceLoading = "failed";
+			state.cohortExamPerformanceError = action.payload;
+		});
+
+		// Reducers for getDailyAttendancePercentage
+		builder.addCase(getDailyAttendancePercentage.pending, (state) => {
+			state.dailyAttendancePercentageLoading = "pending";
+			state.dailyAttendancePercentageError = null;
+		});
+		builder.addCase(
+			getDailyAttendancePercentage.fulfilled,
+			(state, action) => {
+				state.dailyAttendancePercentageLoading = "succeeded";
+				state.dailyAttendancePercentage = action.payload;
+			}
+		);
+		builder.addCase(
+			getDailyAttendancePercentage.rejected,
+			(state, action) => {
+				state.dailyAttendancePercentageLoading = "failed";
+				state.dailyAttendancePercentageError = action.payload;
+			}
+		);
+		// Reducers for getExamsListForDropdown
+		builder.addCase(getExamsListForDropdown.pending, (state) => {
+			state.examsListLoading = "pending";
+			state.examsListError = null;
+		});
+		builder.addCase(getExamsListForDropdown.fulfilled, (state, action) => {
+			state.examsListLoading = "succeeded";
+			state.examsList = action.payload;
+			// Optionally, set the most recent exam as default if available
+			if (action.payload.length > 0 && state.selectedExamId === null) {
+				state.selectedExamId = action.payload[0]._id;
+			}
+		});
+		builder.addCase(getExamsListForDropdown.rejected, (state, action) => {
+			state.examsListLoading = "failed";
+			state.examsListError = action.payload;
+		});
+
+		// Reducers for getStudentExamResultsForExam
+		builder.addCase(getStudentExamResultsForExam.pending, (state) => {
+			state.studentExamResultsLoading = "pending";
+			state.studentExamResultsError = null;
+		});
+		builder.addCase(
+			getStudentExamResultsForExam.fulfilled,
+			(state, action) => {
+				state.studentExamResultsLoading = "succeeded";
+				state.studentExamResults = action.payload;
+			}
+		);
+		builder.addCase(
+			getStudentExamResultsForExam.rejected,
+			(state, action) => {
+				state.studentExamResultsLoading = "failed";
+				state.studentExamResultsError = action.payload;
+			}
+		);
+		// Reducers for getStudentFinanceDetails
+		builder.addCase(getStudentFinanceDetails.pending, (state) => {
+			state.studentFinanceDetailsLoading = "pending";
+			state.studentFinanceDetailsError = null;
+		});
+		builder.addCase(getStudentFinanceDetails.fulfilled, (state, action) => {
+			state.studentFinanceDetailsLoading = "succeeded";
+			state.studentFinanceDetails = action.payload;
+		});
+		builder.addCase(getStudentFinanceDetails.rejected, (state, action) => {
+			state.studentFinanceDetailsLoading = "failed";
+			state.studentFinanceDetailsError = action.payload;
+		});
+
+		// Reducers for getSchoolPaymentDetails
+		builder.addCase(getSchoolPaymentDetails.pending, (state) => {
+			state.schoolPaymentDetailsLoading = "pending";
+			state.schoolPaymentDetailsError = null;
+		});
+		builder.addCase(getSchoolPaymentDetails.fulfilled, (state, action) => {
+			state.schoolPaymentDetailsLoading = "succeeded";
+			state.schoolPaymentDetails = action.payload;
+		});
+		builder.addCase(getSchoolPaymentDetails.rejected, (state, action) => {
+			state.schoolPaymentDetailsLoading = "failed";
+			state.schoolPaymentDetailsError = action.payload;
+		});
+		// Reducers for updateSchoolPaymentDetails
+        builder.addCase(updateSchoolPaymentDetails.pending, (state) => {
+            state.updateSchoolPaymentDetailsLoading = 'pending';
+            state.updateSchoolPaymentDetailsError = null;
+        });
+        builder.addCase(updateSchoolPaymentDetails.fulfilled, (state, action) => {
+            state.updateSchoolPaymentDetailsLoading = 'succeeded';
+            // Optionally update the schoolPaymentDetails state directly after a successful update
+            // This ensures the displayed data is fresh without another GET call
+            state.schoolPaymentDetails = action.payload.paymentDetails;
+            state.updateSchoolPaymentDetailsError = null; // Clear any previous errors
+        });
+        builder.addCase(updateSchoolPaymentDetails.rejected, (state, action) => {
+            state.updateSchoolPaymentDetailsLoading = 'failed';
+            state.updateSchoolPaymentDetailsError = action.payload;
+        });
 	},
 });
 
@@ -764,6 +1055,15 @@ export const {
 	setSelectedTeacher,
 	clearExamState,
 	clearSelectedExamData,
-	clearAttendanceState
+	clearAttendanceState,
+	clearStudentAttendanceSummary,
+	clearCohortExamPerformanceState,
+	clearDailyAttendancePercentageState,
+	clearExamsListState,
+	clearStudentExamResultsState,
+	setSelectedExamId,
+	clearStudentFinanceDetailsState,
+	clearSchoolPaymentDetailsState,
+    clearUpdateSchoolPaymentDetailsState, 
 } = schoolSlice.actions;
 export default schoolSlice.reducer;

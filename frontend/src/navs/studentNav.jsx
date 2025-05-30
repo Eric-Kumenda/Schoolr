@@ -12,18 +12,7 @@ const studentNav = [
 				name: "Summary",
 				to: "/student",
 			},
-			{
-				component: CNavItem,
-				name: "Messages",
-				to: "/chat",
-			},
 		],
-	},
-	{
-		component: CNavItem,
-		name: "Join School",
-		to: "/student/join",
-		icon: <i className="fa-solid fa-user-plus nav-icon"></i>,
 	},
 	{
 		component: CNavItem,

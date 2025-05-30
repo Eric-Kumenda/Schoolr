@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 
-const requireAdmin = require('../middleware/requireAdmin'); // Admin only
+const requireAdmin = require("../middleware/requireAdmin"); // Admin only
 const {
 	createSchool,
 	schoolInfo,
@@ -12,8 +12,11 @@ const {
 	updateStudent,
 	updateTeacher,
 	querySchool,
-	linkUserToSchool
+	linkUserToSchool,
+	getSchoolPaymentDetails,
+	updateSchoolPaymentDetails
 } = require("../controllers/schoolController");
+const requireAuth = require("../middleware/requireAuth");
 
 router.post("/create", createSchool);
 router.post("/getInfo", schoolInfo);
@@ -25,6 +28,10 @@ router.put("/students/update/:studentId", updateStudent);
 router.put("/teachers/update/:teacherId", updateTeacher);
 router.get("/fetch/:schoolId", querySchool);
 
-router.post('/admin/link-user-to-school', requireAdmin, linkUserToSchool);
+router.post("/admin/link-user-to-school", requireAdmin, linkUserToSchool); // Route to get school payment details
+router.get("/payment-details", requireAuth, getSchoolPaymentDetails);
+// Route to update school payment details (Admin only)
+router.put('/payment-details', requireAuth, updateSchoolPaymentDetails);
+
 
 module.exports = router;

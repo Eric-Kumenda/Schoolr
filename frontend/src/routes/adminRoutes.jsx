@@ -2,8 +2,12 @@ import React from "react";
 
 import ProtectedRoute from "../components/ProtectedRoute";
 import { element, exact } from "prop-types";
+const AdminPaymentDetailsPage = React.lazy(() =>
+	import("../views/finance/AdminPaymentDetailsPage")
+);
 const LinkUserToSchool = React.lazy(() =>
-	import("../views/pages/SchoolMembership/LinkUserToSchool"))
+	import("../views/pages/SchoolMembership/LinkUserToSchool")
+);
 
 const AdminDashboard = React.lazy(() =>
 	import("../components/Dashboard/AdminDashboard")
@@ -20,21 +24,14 @@ const UploadStudents = React.lazy(() =>
 const UploadTeachers = React.lazy(() =>
 	import("../views/pages/SchoolMembership/UploadTeachers")
 );
-const CreateExam = React.lazy(() =>
-	import( "../views/exams/CreateExam")
-);
-const ManageExams = React.lazy(() =>
-	import("../views/exams/ManageExams")
-);
-const ExamOverview = React.lazy(() =>
-	import("../views/exams/ExamOverview")
-);
-const ResultsEntry = React.lazy(() =>
-	import("../views/exams/ResultsEntry")
-);
+const CreateExam = React.lazy(() => import("../views/exams/CreateExam"));
+const ManageExams = React.lazy(() => import("../views/exams/ManageExams"));
+const ExamOverview = React.lazy(() => import("../views/exams/ExamOverview"));
+const ResultsEntry = React.lazy(() => import("../views/exams/ResultsEntry"));
 const ViewStudentResults = React.lazy(() =>
 	import("../views/exams/ViewStudentResults")
 );
+const AdminBilling = React.lazy(() => import("../views/finance/AdminBilling"));
 const StudentList = React.lazy(() => import("../views/students/StudentList"));
 const TeachersList = React.lazy(() => import("../views/teachers/TeachersList"));
 const Classes = React.lazy(() => import("../views/students/Classes"));
@@ -76,7 +73,13 @@ const adminRoutes = [
 		path: "/school/profile",
 		exact: true,
 		name: "Students",
-		element: StudentList,
+		element: AdminPaymentDetailsPage,
+	},
+	{
+		path: "/school/billing",
+		exact: true,
+		name: "Billing",
+		element: AdminBilling,
 	},
 	{
 		path: "/students",
@@ -162,6 +165,7 @@ const adminRoutes = [
 		name: "Link User Account",
 		element: LinkUserToSchool,
 	},
+
 	{
 		path: "/chat",
 		exact: true,

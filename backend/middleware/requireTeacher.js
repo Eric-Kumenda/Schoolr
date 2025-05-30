@@ -41,7 +41,8 @@ const requireTeacher = async (req, res, next) => {
 		req.user = {
 			id: user.id, // Supabase user ID
 			role: user.role,
-			schoolId: schoolObjectId, // Mongoose ObjectId of the school
+			schoolId: user.schoolId,
+			schoolObjectId: schoolObjectId, // Mongoose ObjectId of the school
 		};
 
 		next();
